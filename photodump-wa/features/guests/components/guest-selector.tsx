@@ -3,11 +3,15 @@
 import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { Guest } from "@/features/guests/types";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function GuestSelector({guests}: {guests: Guest[]}) {
+    const router = useRouter();
+
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
     const [query, setQuery] = useState('');
-    const [showSelectGuestError, setShowSelectGuestError] = useState(false);
+    const [showError, setShowError] = useState(false);
+    const [errorType, setErrorType] = useState(0);
 
     const filteredGuests = query === ''
       ? guests
@@ -15,20 +19,31 @@ export default function GuestSelector({guests}: {guests: Guest[]}) {
           return guest.name.toLowerCase().includes(query.toLowerCase())
         })
     
-    const loginGuest = () => {
+    const loginGuest = async () => {
         if (!selectedGuest) {
-            setShowSelectGuestError(true);
+            setErrorType(0);
+            setShowError(true);
         }
         else {
-            return
-        }
+            const loginResponse = await fetch('/api/login', {
+                method: 'POST',
+                body: JSON.stringify(selectedGuest)
+            })
 
+            if (!loginResponse.ok) {
+                setErrorType(1);
+                setShowError(true);
+            }
+            else {
+                router.push('/home');
+            }
+        }
     }
 
     return (
         <div className="flex flex-col items-center justify-center">
-            <div className={`text-[#FF0000] ${showSelectGuestError ? 'block' : 'hidden'}`}>
-                Please select your name from the guest list
+            <div className={`text-[#FF0000] ${showError ? 'block' : 'hidden'}`}>
+               {errorType == 0 ? 'Please select your name from the guest list' : 'There was an issue when logging you in. Please contact Ryan Socha'}
             </div>
 
             <Combobox 
@@ -36,7 +51,7 @@ export default function GuestSelector({guests}: {guests: Guest[]}) {
                 value={selectedGuest} 
                 onChange={(guest: Guest) => {
                     setSelectedGuest(guest);
-                    setShowSelectGuestError(false);
+                    setShowError(false);
                 }}
                 onClose={() => setQuery('')}
             >
