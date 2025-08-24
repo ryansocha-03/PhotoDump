@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
 import { Guest, GuestSchema } from "@/features/guests/types";
 
 export async function getGuestList(): Promise<Guest[]> {
-    const guestListResponse = await fetch(`${process.env.PHOTODUMP_API_URL}/guests`)
+    const guestListResponse = await fetch(`${process.env.PHOTODUMP_API_URL}/guests`, {
+        cache: 'no-store'
+    })
 
     if (!guestListResponse.ok) {
         return [];

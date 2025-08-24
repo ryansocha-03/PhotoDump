@@ -2,10 +2,11 @@
 
 import { Button, Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { Guest } from "@/features/guests/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getGuestList } from "../data";
 
-export default function GuestSelector({guests}: {guests: Guest[]}) {
+export default function GuestSelector({guestList} : {guestList: Guest[]}) {
     const router = useRouter();
 
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
@@ -14,8 +15,8 @@ export default function GuestSelector({guests}: {guests: Guest[]}) {
     const [errorType, setErrorType] = useState(0);
 
     const filteredGuests = query === ''
-      ? guests
-      : guests.filter((guest) => {
+      ? guestList
+      : guestList.filter((guest) => {
           return guest.name.toLowerCase().includes(query.toLowerCase())
         })
     

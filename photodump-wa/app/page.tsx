@@ -1,6 +1,5 @@
 import GuestSelector from "@/features/guests/components/guest-selector";
 import { getGuestList } from "@/features/guests/data";
-import { Button } from "@headlessui/react";
 
 export default async function Home() {
   const guests = await getGuestList();
@@ -8,7 +7,7 @@ export default async function Home() {
   return (
     <main>
       <div>
-        <GuestSelector guests={guests} />
+        <GuestSelector guestList={guests} />
       </div>
     </main>
   );
