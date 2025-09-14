@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using photodump_api.Features.GetGuestList;
+using photodump_api.Features.UploadMedia;
 using photodump_api.Infrastructure.Db;
 using photodump_api.Infrastructure.Db.Data;
 using photodump_api.Infrastructure.Db.Repositories;
+using photodump_api.Shared.Classes;
+using photodump_api.Shared.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +20,12 @@ builder.Services.AddSwaggerGen();
 
 // Add repositories
 builder.Services.AddScoped<IGuestRepository, GuestRepository>();
+builder.Services.AddScoped<IMediaRepository, MediaRepository>();
 
 // Add handlers/services
+builder.Services.AddSingleton<IMediaStorage, MinIoService>();
 builder.Services.AddScoped<GetGuestListHandler>();
+builder.Services.AddScoped<UploadMediaHandler>();
 
 var app = builder.Build();
 
@@ -46,11 +52,17 @@ app.Map("/error", async (HttpContext context) =>
     if (exception is BadHttpRequestException)
     {
         context.Response.StatusCode = StatusCodes.Status400BadRequest;
-        await context.Response.WriteAsync("Bad Request");
+        await context.Response.WriteAsync(exception.Message);
+    }
+    else if (exception is IOException)
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsync(exception.Message);
     }
 });
 
 // Add endpoints
 app.AddGuestListEndpoint();
+app.AddUploadMediaEndpoint();
 
 app.Run();

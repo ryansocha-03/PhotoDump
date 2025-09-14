@@ -11,4 +11,11 @@ public class GuestRepository(AppDbContext context): IGuestRepository
             .Where(g => g.EventId == eventId)
             .ToListAsync();
     }
+
+    public async Task<Guest?> GetAsync(int eventId, int guestId)
+    {
+        return await context.Guests
+            .Where(g => g.EventId == eventId && g.Id == guestId)
+            .FirstOrDefaultAsync();
+    }
 }
