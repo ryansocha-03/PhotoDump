@@ -68,6 +68,8 @@ coverage-final.json
 *.seed
 docker-compose.override.yml
 .env.docker
+.env
+.env.*
 
 # ========================
 # Misc editors / tools
