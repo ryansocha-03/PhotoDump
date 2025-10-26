@@ -38,6 +38,7 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
         builder
             .HasOne(m => m.MediaType)
             .WithMany(mt => mt.Media)
-            .HasForeignKey(m => m.MediaTypeId);
+            .HasForeignKey(m => m.MediaTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

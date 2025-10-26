@@ -23,12 +23,14 @@ public class EventEntityTypeConfiguration :  IEntityTypeConfiguration<Event>
         builder
             .HasOne(e => e.EventState)
             .WithMany(es => es.Events)
-            .HasForeignKey(e => e.EventStateId);
+            .HasForeignKey(e => e.EventStateId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         builder
             .HasOne(e => e.EventType)
             .WithMany(et => et.Events)
-            .HasForeignKey(e => e.EventTypeId);
+            .HasForeignKey(e => e.EventTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder
             .HasMany(e => e.Guests)

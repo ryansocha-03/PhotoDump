@@ -5,6 +5,9 @@ namespace Api.Infrastructure;
 
 public class AppDbContext: DbContext
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    { }
+
     public DbSet<Event> Events { get; set; }
     public DbSet<EventState> EventStates { get; set; }
     public DbSet<EventType> EventTypes { get; set; }
