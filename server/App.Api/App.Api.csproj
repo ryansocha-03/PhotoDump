@@ -27,4 +27,8 @@
       <Folder Include="Infrastructure\Migrations\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Infrastructure.EntityFramework\Infrastructure.EntityFramework.csproj" />
+    </ItemGroup>
+
 </Project>
