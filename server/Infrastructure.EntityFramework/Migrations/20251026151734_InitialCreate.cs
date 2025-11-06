@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace App.Api.Infrastructure.Migrations
+namespace Infrastructure.EntityFramework.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

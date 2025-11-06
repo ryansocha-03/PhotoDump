@@ -1,4 +1,4 @@
-namespace App.Api.Infrastructure.Models;
+namespace Infrastructure.EntityFramework.Models;
 
 public class Admin
 {

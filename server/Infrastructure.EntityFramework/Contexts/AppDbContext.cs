@@ -1,7 +1,7 @@
-using App.Api.Infrastructure.Models;
+using Infrastructure.EntityFramework.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace App.Api.Infrastructure;
+namespace Infrastructure.EntityFramework.Contexts;
 
 public class AppDbContext: DbContext
 {

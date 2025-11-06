@@ -1,8 +1,8 @@
-using App.Api.Infrastructure.Models;
+using Infrastructure.EntityFramework.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace App.Api.Infrastructure.Configurations;
+namespace Infrastructure.EntityFramework.Configurations;
 
 public class EventTypeEntityTypeConfiguration : IEntityTypeConfiguration<EventType>
 {

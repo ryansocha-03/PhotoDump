@@ -1,4 +1,4 @@
-﻿using App.Api.Infrastructure;
+﻿using Infrastructure.EntityFramework.Contexts;
 using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
