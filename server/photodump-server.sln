@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.Api", "App.Api\App.Api.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.EntityFramework", "Infrastructure.EntityFramework\Infrastructure.EntityFramework.csproj", "{EB034ACB-5C3D-483E-894D-F56901A66589}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{53065D60-69DF-46AF-BC97-ACA1900B261E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{EB034ACB-5C3D-483E-894D-F56901A66589}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB034ACB-5C3D-483E-894D-F56901A66589}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB034ACB-5C3D-483E-894D-F56901A66589}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53065D60-69DF-46AF-BC97-ACA1900B261E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53065D60-69DF-46AF-BC97-ACA1900B261E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53065D60-69DF-46AF-BC97-ACA1900B261E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53065D60-69DF-46AF-BC97-ACA1900B261E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,17 +1,16 @@
-﻿using Infrastructure.EntityFramework.Contexts;
-using Microsoft.EntityFrameworkCore;
+﻿using Core.Configuration.Utilities;
+using Infrastructure.EntityFramework.Utilities;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDatabaseConfiguration(builder.Configuration);
+
+builder.Services.AddDatabaseRepositories();
 
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-var dbConnectionString= $"Host={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};Username={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")}";
-
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(dbConnectionString)
-);
 
 var app = builder.Build();
 

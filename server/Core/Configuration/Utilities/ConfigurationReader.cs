@@ -1,0 +1,13 @@
+using Core.Configuration.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Core.Configuration.Utilities;
+
+public static class ConfigurationReader
+{
+    public static void AddDatabaseConfiguration(this IServiceCollection  services, IConfiguration configuration)
+    {
+        services.Configure<DatabaseConfigurationModel>(configuration.GetSection("Database"));
+    }
+}
