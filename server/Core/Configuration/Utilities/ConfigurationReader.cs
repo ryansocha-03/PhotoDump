@@ -8,6 +8,6 @@ public static class ConfigurationReader
 {
     public static void AddDatabaseConfiguration(this IServiceCollection  services, IConfiguration configuration)
     {
-        services.Configure<DatabaseConfigurationModel>(configuration.GetSection("Database"));
+        services.Configure<DatabaseConfigurationModel>(configuration.GetSection("AppDatabase"));
     }
 }

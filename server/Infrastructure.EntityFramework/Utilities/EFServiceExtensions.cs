@@ -1,7 +1,8 @@
 using Core.Configuration.Models;
 using Infrastructure.EntityFramework.Contexts;
+using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -24,7 +25,8 @@ public static class EFServiceExtensions
                     break;
             }
         });
-        
-        
+
+        services.AddScoped<IRepository<EventType>, EventTypeRepository>();
     }
+    
 }
