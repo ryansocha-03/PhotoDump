@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Api.Infrastructure.Models;
+namespace App.Api.Infrastructure.Models;
 
 public class Event
 {

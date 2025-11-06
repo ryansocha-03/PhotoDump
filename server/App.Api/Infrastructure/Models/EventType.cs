@@ -1,9 +1,9 @@
-namespace Api.Infrastructure.Models;
+namespace App.Api.Infrastructure.Models;
 
-public class EventState
+public class EventType
 {
     public int Id { get; set; }
-    public string StateName { get; set; }
+    public string TypeName { get; set; }
 
     public IEnumerable<Event> Events { get; set; } = new List<Event>();
 }

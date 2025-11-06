@@ -1,8 +1,8 @@
-using Api.Infrastructure.Models;
+using App.Api.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Api.Infrastructure.Configurations;
+namespace App.Api.Infrastructure.Configurations;
 
 public class EventStateEntityTypeConfiguration : IEntityTypeConfiguration<EventState>
 {
