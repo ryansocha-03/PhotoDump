@@ -27,6 +27,8 @@ public static class EFServiceExtensions
         });
 
         services.AddScoped<IRepository<EventType>, EventTypeRepository>();
+        services.AddScoped<IRepository<EventState>, EventStateRepository>();
+        services.AddScoped<IRepository<Event>, EventRepository>();
     }
     
 }

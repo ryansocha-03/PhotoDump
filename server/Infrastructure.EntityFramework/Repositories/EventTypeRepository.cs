@@ -29,7 +29,6 @@ public class EventTypeRepository(AppDbContext context) : IRepository<EventType>
         if (entityToDelete is null)
             return false;
         
-
         context.EventTypes.Remove(entityToDelete);
         await context.SaveChangesAsync();
         return true;

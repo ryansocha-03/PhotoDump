@@ -21,6 +21,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Infrastructure.EntityFramework\Infrastructure.EntityFramework.csproj" />
       <ProjectReference Include="..\Core\Core.csproj" />
+      <ProjectReference Include="..\Identity\Identity.csproj" />
     </ItemGroup>
 
     <ItemGroup>

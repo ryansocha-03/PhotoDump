@@ -1,4 +1,6 @@
-﻿using Core.Configuration.Utilities;
+﻿using App.Api.Services;
+using Core.Configuration.Utilities;
+using Identity;
 using Infrastructure.EntityFramework.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDatabaseConfiguration(builder.Configuration);
 
 builder.Services.AddDatabaseRepositories();
+
+builder.Services.AddIdentityServices();
+
+builder.Services.AddApiServices();
 
 builder.Services.AddControllers();
 
