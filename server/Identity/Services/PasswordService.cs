@@ -5,12 +5,11 @@ namespace Identity.Services;
 
 public class PasswordService
 {
-    private static PasswordHasher<HashUser> _hasher = new();
+    private static readonly PasswordHasher<object> Hasher = new();
     
     public bool PasswordHashMatches(string enteredPassword, string eventPasswordHash)
     {
-        var hashUser = new HashUser();
-        var hashMatchResult = _hasher.VerifyHashedPassword(hashUser, eventPasswordHash, enteredPassword);
+        var hashMatchResult = Hasher.VerifyHashedPassword(null, eventPasswordHash, enteredPassword);
         switch (hashMatchResult)
         {
             case PasswordVerificationResult.Success:
@@ -24,9 +23,13 @@ public class PasswordService
         }
     }
 
+    public string? VerifyPasswordRequirements(string enteredPassword)
+    {
+        return enteredPassword.Length < 6 ? "Password must be at least 6 characters" : null;
+    }
+
     public string HashPassword(string enteredPassword)
     {
-        var hashUser = new HashUser();
-        return _hasher.HashPassword(hashUser, enteredPassword);
+        return Hasher.HashPassword(null, enteredPassword);
     }
 }
