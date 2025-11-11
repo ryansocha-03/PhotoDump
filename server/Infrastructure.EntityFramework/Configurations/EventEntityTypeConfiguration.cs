@@ -13,6 +13,27 @@ public class EventEntityTypeConfiguration :  IEntityTypeConfiguration<Event>
             .IsRequired();
 
         builder
+            .Property(e => e.EventNameShort)
+            .HasMaxLength(25);
+
+        builder
+            .Property(e => e.PublicId)
+            .HasDefaultValueSql("gen_random_uuid()")
+            .ValueGeneratedNever();
+        
+        builder
+            .HasIndex(e => e.PublicId)
+            .IsUnique();
+        
+        builder
+            .Property(e => e.ColorPrimary)
+            .HasMaxLength(7);
+        
+        builder
+            .Property(e => e.ColorSecondary)
+            .HasMaxLength(7);
+
+        builder
             .Property(e => e.EventDate)
             .IsRequired();
         
