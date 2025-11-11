@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.EntityFramework.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251111174931_AddEventThemePublicId")]
-    partial class AddEventThemePublicId
+    [Migration("20251111195054_AddThemeAndPublicId")]
+    partial class AddThemeAndPublicId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -98,6 +98,7 @@ namespace Infrastructure.EntityFramework.Migrations
                         .HasColumnType("integer");
 
                     b.Property<Guid>("PublicId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 

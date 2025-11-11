@@ -4,8 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.EntityFramework.Repositories;
 
-public class EventRepository(AppDbContext context): IRepository<Event>
+public class EventRepository(AppDbContext context): IEventRepository 
 {
+    public async Task<Event?> GetByPublicIdAsync(Guid publicId)
+    {
+        return await context.Events.FirstOrDefaultAsync(e => e.PublicId == publicId);
+    }
+    
     public async Task<Event?> GetAsync(int id)
     {
         return await context.Events.FindAsync(id);

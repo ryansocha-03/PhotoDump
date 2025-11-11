@@ -1,4 +1,3 @@
-using Identity.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace Identity.Services;

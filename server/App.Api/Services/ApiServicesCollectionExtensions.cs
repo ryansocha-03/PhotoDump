@@ -4,6 +4,6 @@ public static class ApiServicesCollectionExtensions
 {
    public static void AddApiServices(this IServiceCollection services)
    {
-      services.AddScoped<AuthService>();
+      services.AddScoped<EventService>();
    } 
 }

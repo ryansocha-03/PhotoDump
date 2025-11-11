@@ -95,6 +95,7 @@ namespace Infrastructure.EntityFramework.Migrations
                         .HasColumnType("integer");
 
                     b.Property<Guid>("PublicId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 

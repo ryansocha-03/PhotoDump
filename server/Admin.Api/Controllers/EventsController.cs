@@ -8,7 +8,7 @@ namespace Admin.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EventsController(PasswordService passwordService, IRepository<Event> eventRepository) : ControllerBase
+public class EventsController(PasswordService passwordService, IEventRepository eventRepository) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> CreateNewEvent([FromBody] NewEventRequestModel newEvent)
@@ -18,12 +18,14 @@ public class EventsController(PasswordService passwordService, IRepository<Event
             return BadRequest(passwordVerificationResult);
         
         var hashedPassword = passwordService.HashPassword(newEvent.EventPassword);
-        Console.WriteLine(hashedPassword);
 
         var eventEntity = new Event()
         {
             EventName = newEvent.EventName,
+            EventNameShort = newEvent.EventNameShort,
             EventDate = newEvent.EventDate,
+            ColorPrimary = newEvent.EventColorPrimary,
+            ColorSecondary = newEvent.EventColorSecondary,
             EventStateId = newEvent.EventStateId,
             EventTypeId = newEvent.EventTypeId,
             EventPasswordHash = hashedPassword,

@@ -19,7 +19,7 @@ public class EventEntityTypeConfiguration :  IEntityTypeConfiguration<Event>
         builder
             .Property(e => e.PublicId)
             .HasDefaultValueSql("gen_random_uuid()")
-            .ValueGeneratedNever();
+            .ValueGeneratedOnAdd();
         
         builder
             .HasIndex(e => e.PublicId)

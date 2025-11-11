@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.EntityFramework.Migrations
 {
     /// <inheritdoc />
-    public partial class AddEventThemePublicId : Migration
+    public partial class AddThemeAndPublicId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

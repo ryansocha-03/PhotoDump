@@ -6,7 +6,7 @@ namespace Internal.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EventsController(IRepository<Event> repository): ControllerBase
+public class EventsController(IEventRepository repository): ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Event>>> GetAllEvents()
