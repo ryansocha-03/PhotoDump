@@ -10,6 +10,11 @@ public class EventRepository(AppDbContext context): IEventRepository
     {
         return await context.Events.FirstOrDefaultAsync(e => e.PublicId == publicId);
     }
+
+    public async Task<IEnumerable<Guest>> GetGuestListForEventAsync(int eventId)
+    {
+        return await context.Guests.Where(g => g.EventId == eventId).ToListAsync();
+    }
     
     public async Task<Event?> GetAsync(int id)
     {

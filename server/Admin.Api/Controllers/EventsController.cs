@@ -8,7 +8,7 @@ namespace Admin.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EventsController(PasswordService passwordService, IEventRepository eventRepository) : ControllerBase
+public class EventsController(PasswordService passwordService, IEventRepository eventRepository, IRepository<Guest> guestRepository) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> CreateNewEvent([FromBody] NewEventRequestModel newEvent)
@@ -35,5 +35,29 @@ public class EventsController(PasswordService passwordService, IEventRepository 
         var addedEvent = await eventRepository.AddAsync(eventEntity);
         
         return Ok(addedEvent);
+    }
+
+    [HttpPost("{eventId}/guests")]
+    public async Task<IActionResult> InviteNewGuest([FromRoute] int eventId, [FromBody] NewGuestRequestModel newGuestRequest)
+    {
+        if (string.IsNullOrWhiteSpace(newGuestRequest.FirstName) || string.IsNullOrWhiteSpace(newGuestRequest.LastName))
+        {
+            return BadRequest("First name and last name cannot be empty");
+        }
+
+        var newGuest = new Guest()
+        {
+            EventId = eventId,
+            FirstName = newGuestRequest.FirstName,
+            LastName = newGuestRequest.LastName
+        };
+        
+        return Ok(await guestRepository.AddAsync(newGuest));
+    }
+
+    [HttpGet("{eventId}/guests")]
+    public async Task<IActionResult> GetGuestList([FromRoute] int eventId)
+    {
+        return Ok(await eventRepository.GetGuestListForEventAsync(eventId));
     }
 }
