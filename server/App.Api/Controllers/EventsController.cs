@@ -2,6 +2,7 @@ using App.Api.Models;
 using App.Api.Models.Response;
 using App.Api.Services;
 using Identity.Services;
+using Infrastructure.EntityFramework.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Controllers;
@@ -32,6 +33,5 @@ public class EventsController(EventService eventService, PasswordService passwor
         if (passwordService.PasswordHashMatches(eventLoginRequest.EventKey, eventHash))
             return Ok(tokenService.CreateAnonymousGuestToken(eventPublicId));
         return Unauthorized("Invalid event key.");
-
     }
 }
