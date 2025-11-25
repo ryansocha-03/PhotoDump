@@ -16,10 +16,13 @@ public class EventRepository(AppDbContext context): IEventRepository
         return await context.Guests.Where(g => g.EventId == eventId).ToListAsync();
     }
 
-    public async Task<IEnumerable<Guest>> GuestListSearchAsync(Guid eventPublicId, string search)
+    public async Task<IEnumerable<Guest>> GuestListSearchAsync(int eventId, string search)
     {
-        throw new NotImplementedException();
-        
+        return await context.Guests
+            .Where(g => g.EventId == eventId &&
+               EF.Functions.ILike(g.FullName, $"%{search}%"))
+            .Take(20)
+            .ToListAsync();
     }
     
     public async Task<Event?> GetAsync(int id)

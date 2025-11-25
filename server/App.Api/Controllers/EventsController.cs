@@ -34,4 +34,13 @@ public class EventsController(EventService eventService, PasswordService passwor
             return Ok(tokenService.CreateAnonymousGuestToken(eventPublicId));
         return Unauthorized("Invalid event key.");
     }
+
+    [HttpGet("{eventPublicId}/guests")]
+    public async Task<IActionResult> GuestListSearch([FromRoute] Guid eventPublicId, 
+        [FromQuery] string guestName)
+    {
+        if (string.IsNullOrWhiteSpace(guestName) || guestName.Length < 3) return BadRequest("Guest name must be provided and at least 3 characters");
+        
+        return Ok(await eventService.FetchGuestSearchAsync(eventPublicId, guestName));
+    }
 }

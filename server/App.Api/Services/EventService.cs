@@ -27,4 +27,18 @@ public class EventService(IEventRepository eventRepository)
 
         return eventData?.EventPasswordHash;
     }
+
+    public async Task<List<GuestSearchResponseModel>> FetchGuestSearchAsync(Guid eventPublicId, string searchQuery)
+    {
+        var eventdata = await eventRepository.GetByPublicIdAsync(eventPublicId);
+        if (eventdata is null) return new List<GuestSearchResponseModel>();
+        
+        var guestResults =  await eventRepository.GuestListSearchAsync(eventdata.Id, searchQuery);
+
+        return guestResults.Select(guest => new GuestSearchResponseModel()
+        {
+            GuestId = guest.Id,
+            GuestName = guest.FullName
+        }).ToList();
+    }
 }

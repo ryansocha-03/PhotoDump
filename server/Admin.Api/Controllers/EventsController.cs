@@ -49,7 +49,8 @@ public class EventsController(PasswordService passwordService, IEventRepository 
         {
             EventId = eventId,
             FirstName = newGuestRequest.FirstName,
-            LastName = newGuestRequest.LastName
+            LastName = newGuestRequest.LastName,
+            FullName = string.Concat(newGuestRequest.FirstName, " ", newGuestRequest.LastName),  
         };
         
         return Ok(await guestRepository.AddAsync(newGuest));

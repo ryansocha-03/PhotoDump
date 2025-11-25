@@ -17,6 +17,11 @@ public class GuestEntityTypeConfiguration : IEntityTypeConfiguration<Guest>
             .Property(g => g.LastName)
             .HasMaxLength(255)
             .IsRequired();
+
+        builder
+            .Property(g => g.FullName)
+            .HasMaxLength(500)
+            .IsRequired();
         
         builder
             .HasMany(g => g.UploadedMedia)
