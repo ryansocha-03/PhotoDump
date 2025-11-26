@@ -33,9 +33,14 @@ services:
       dockerfile: server/App.Api/Dockerfile 
     depends_on:
       - db
+      - minio
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      ContentStore__ContentStoreProvider: "s3"
+      ContentStore__AccessKey: "${MINIO_USER}"
+      ContentStore__SecretKey: "${MINIO_PASSWORD}"
+      ContentStore__Endpoint: "${MINIO_ENDPOINT}"
     ports:
       - "8080:8080"
     restart: always

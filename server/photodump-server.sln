@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Admin.Api", "Admin.Api\Admi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Internal.Api", "Internal.Api\Internal.Api.csproj", "{569E440F-7329-4B33-BB38-D376BF6CF9F8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContentStore.MinIO", "ContentStore.MinIO\ContentStore.MinIO.csproj", "{597B7FDC-1A36-4E94-A211-B02D52A3D4C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{569E440F-7329-4B33-BB38-D376BF6CF9F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{569E440F-7329-4B33-BB38-D376BF6CF9F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{569E440F-7329-4B33-BB38-D376BF6CF9F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{597B7FDC-1A36-4E94-A211-B02D52A3D4C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{597B7FDC-1A36-4E94-A211-B02D52A3D4C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{597B7FDC-1A36-4E94-A211-B02D52A3D4C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{597B7FDC-1A36-4E94-A211-B02D52A3D4C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

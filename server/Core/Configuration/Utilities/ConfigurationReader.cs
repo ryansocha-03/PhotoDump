@@ -10,4 +10,9 @@ public static class ConfigurationReader
     {
         services.Configure<DatabaseConfigurationModel>(configuration.GetSection("AppDatabase"));
     }
+
+    public static void AddContentStoreConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<ContentStoreConfigurationModel>(configuration.GetSection("ContentStore"));
+    }
 }
