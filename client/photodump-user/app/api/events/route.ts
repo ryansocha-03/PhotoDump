@@ -37,7 +37,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         `${process.env.APP_API_URL}/api/events/${requestData.eventPublicId}/auth`,
         {
             method: 'POST',
-            body: JSON.stringify(authBody)
+            body: JSON.stringify(authBody),
+            headers: {
+                'Content-Type': 'application/json'
+            }
         }
     )
 

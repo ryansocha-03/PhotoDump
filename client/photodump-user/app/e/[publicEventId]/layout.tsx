@@ -8,15 +8,15 @@ export default async function Layout({
   children: React.ReactNode,
   params: Promise<{ publicEventId: string }>
 }){
-    const { publicEventId } = await params;
-    const eventData = await getEventLandingData(publicEventId);
+  const { publicEventId } = await params;
+  const eventData = await getEventLandingData(publicEventId);
 
-    if (eventData.code == 404) {
-        notFound()
-    }
-    else if (eventData.code != 200) {
-        throw new Error("BRUH")
-    }
+  if (eventData.code == 404) {
+      notFound()
+  }
+  else if (eventData.code != 200) {
+      throw new Error("BRUH")
+  }
 
   return (
     <div>

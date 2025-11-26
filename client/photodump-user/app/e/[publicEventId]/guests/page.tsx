@@ -8,7 +8,7 @@ export default async function Page({
     const { publicEventId } = await params;
 
     return (
-        <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center">
             <GuestListSearch eventId={publicEventId}/>
         </div>
     )

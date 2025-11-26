@@ -2,13 +2,30 @@ import { EventGuest } from "@/app/lib/event/types";
 import { mockGuestListSearch } from "@/app/mock-data/event-mock-data";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) : Promise<NextResponse<EventGuest[]>> {
-    const searchQuery = request.nextUrl.searchParams.get('name');
-    if (!searchQuery || searchQuery.trim().length < 3) {
+export interface GuestSearchSubmission {
+    eventId: string,
+    guestName: string
+}
+
+export async function POST(request: NextRequest) : Promise<NextResponse> {
+    const requestData: GuestSearchSubmission = await request.json();
+    if (!requestData?.eventId || !requestData?.guestName || requestData.guestName.trim().length == 0) {
+        return NextResponse.json('Fields eventId and guestName are required and cannot be empty.', { status: 400 });
+    }
+    
+    if (requestData.guestName.trim().length < 3) {
         return NextResponse.json([]);
     }
 
-    await setTimeout(() => {}, 3000)
+    if (process.env.APP_ENVIRONMENT == 'local') {
+        return NextResponse.json(mockGuestListSearch);
+    }
 
-    return NextResponse.json(mockGuestListSearch);
+    const guestSearchResponse = await fetch(`${process.env.APP_API_URL}/api/events/${requestData.eventId}/guests?guestName=${requestData.guestName}`);
+    if (!guestSearchResponse.ok) {
+        return NextResponse.json([], { status: guestSearchResponse.status });
+    }
+
+    const guestSearchData: EventGuest[] = await guestSearchResponse.json();
+    return NextResponse.json(guestSearchData);
 }

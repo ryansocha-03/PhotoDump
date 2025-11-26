@@ -8,6 +8,6 @@ export interface EventLandingData {
 }
 
 export interface EventGuest {
-    id: number,
-    name: string
+    guestId: number,
+    guestName: string
 }

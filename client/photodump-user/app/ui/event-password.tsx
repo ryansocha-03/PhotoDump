@@ -4,15 +4,27 @@ import { useState } from "react"
 import { EventPasswordSubmission } from "../api/events/route";
 import { useRouter } from "next/navigation";
 
+const errorMessages: string[] = [
+    "Incorrect Password.",
+    "Password must contain one or more characters."
+]
+
 export default function EventPassword({
     eventId
 } : {
     eventId: string
 }) {
     const [password, setPassword] = useState("");
+    const [showErrorMessage, setShowErrorMessage] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(0);
     const router = useRouter();
     
     const handleSubmit = async () => {
+        if (password.trim().length == 0) {
+            setErrorMessage(1);
+            setShowErrorMessage(true);
+        }
+
         const authBody: EventPasswordSubmission = {
             eventPassword: password,
             eventPublicId: eventId
@@ -26,14 +38,16 @@ export default function EventPassword({
         )
 
         if (authResponse.ok) {
+            setShowErrorMessage(false);
             router.push(`/e/${eventId}/guests`)
         }
-        if (authResponse.status == 401) {
-            console.log("Incorrect password")
+        else if (authResponse.status == 401) {
+            setErrorMessage(0);
+            setShowErrorMessage(true);
         }
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key == 'Enter') {
             e.preventDefault();
             handleSubmit();
@@ -41,21 +55,26 @@ export default function EventPassword({
     }
 
     return (
-        <div className="flex flex-col gap-5">
-            <input 
-                type="text"
-                placeholder="Enter password..."
-                value={password}
-                className="border rounded-md border-(--foreground) text-xl p-2 focus:outline-none"
-                onKeyDown={handleKeyDown}
-                onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-                className="w-full rounded-md bg-(--foreground) text-(--background) text-xl hover:cursor-pointer"
-                onClick={handleSubmit}
-            >
-                Go
-            </button>
-        </div>
-    )
+        <>
+            <div className="flex flex-col gap-5">
+                <input 
+                    type="text"
+                    placeholder="Enter password..."
+                    value={password}
+                    className="border rounded-md border-(--foreground) text-xl p-2 focus:outline-none"
+                    onKeyUp={handleKeyUp}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                    className="w-full rounded-md bg-(--foreground) text-(--background) text-xl hover:cursor-pointer hover:bg-gray-400"
+                    onClick={handleSubmit}
+                >
+                    Go
+                </button>
+            </div>
+            <div className={`text-red-400 text-wrap text-medium text-lg ${showErrorMessage ? 'block' : 'hidden'}`}>
+                {errorMessages[errorMessage]}
+            </div>
+        </>
+   )
 }
