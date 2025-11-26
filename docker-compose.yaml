@@ -1,8 +1,9 @@
 services:
   db:
     image: postgres:18
+    hostname: ${POSTGRES_HOST}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -10,6 +11,19 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes: 
       - postgres_data:/var/lib/postgresql
+
+  app-api:
+    build:
+      context: .
+      dockerfile: server/App.Api/Dockerfile 
+    depends_on:
+      - db
+    environment:
+      AppDatabase__DatabaseProvider: "postgres"
+      AppDatabase__ConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+    ports:
+      - "8080:8080"
+    restart: always
 
 volumes:
   postgres_data:
