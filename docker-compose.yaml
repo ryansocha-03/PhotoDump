@@ -11,11 +11,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes: 
       - postgres_data:/var/lib/postgresql
+    networks:
+      - photodump-net
 
   minio:
     image: minio/minio
-    container_name: minio
-    hostname: photodump-minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -25,7 +25,8 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
-
+    networks:
+      - photodump-net
 
   app-api:
     build:
@@ -41,10 +42,17 @@ services:
       ContentStore__AccessKey: "${MINIO_USER}"
       ContentStore__SecretKey: "${MINIO_PASSWORD}"
       ContentStore__Endpoint: "${MINIO_ENDPOINT}"
+      DOTNET_ENVIRONMENT: "Development"
     ports:
       - "8080:8080"
     restart: always
+    networks:
+      - photodump-net
 
 volumes:
   postgres_data:
   minio_data:
+
+networks:
+  photodump-net:
+    driver: bridge

@@ -1,6 +1,8 @@
+using Core.Configuration.DTOs;
+
 namespace Core.Interfaces;
 
 public interface IContentStoreService
 {
-    public Task ListBuckets();
+    public Task<List<StorageBucketDTO>> ListBuckets();
 }

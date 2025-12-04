@@ -48,7 +48,7 @@ public class EventsController(EventService eventService, PasswordService passwor
     [HttpGet("buckets")]
     public async Task<IActionResult> ListBuckets()
     {
-        await contentStoreService.ListBuckets();
-        return Ok();
+        var buckets = await contentStoreService.ListBuckets();
+        return Ok(buckets);
     }
 }
