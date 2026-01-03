@@ -3,14 +3,15 @@ using App.Api.Models.Response;
 using App.Api.Services;
 using Core.Interfaces;
 using Identity.Services;
-using Infrastructure.EntityFramework.Models;
+using Identity.Services.Sessions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class EventsController(EventService eventService, PasswordService passwordService, TokenService tokenService, IContentStoreService contentStoreService): ControllerBase
+public class EventsController(EventService eventService, PasswordService passwordService, SessionService sessionService, IContentStoreService contentStoreService): ControllerBase
 {
     [HttpGet("{eventPublicId}")]
     public async Task<ActionResult<EventLandingResponseModel>> GetEventLandingInfo([FromRoute] Guid eventPublicId)
@@ -30,12 +31,17 @@ public class EventsController(EventService eventService, PasswordService passwor
         
         var eventHash = await eventService.FetchEventHashAsync(eventPublicId);
         if (eventHash is null) return NotFound($"No event with public id {eventPublicId}");
-        
+
         if (passwordService.PasswordHashMatches(eventLoginRequest.EventKey, eventHash))
-            return Ok(tokenService.CreateAnonymousGuestToken(eventPublicId));
+        {
+            var sessionData = await sessionService.CreateSessionAsync(eventPublicId);
+            return Ok(new SessionResponseModel(){ SessionId = sessionData.Item1.ToString(), ExpiresAt = sessionData.Item2 });
+        }
+
         return Unauthorized("Invalid event key.");
     }
 
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("{eventPublicId}/guests")]
     public async Task<IActionResult> GuestListSearch([FromRoute] Guid eventPublicId, 
         [FromQuery] string guestName)

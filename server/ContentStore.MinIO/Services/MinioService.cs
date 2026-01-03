@@ -6,11 +6,11 @@ namespace ContentStore.MinIO.Services;
 
 public class MinioService(IMinioClient minioClient): IContentStoreService
 {
-    public async Task<List<StorageBucketDTO>> ListBuckets()
+    public async Task<List<StorageBucketDto>> ListBuckets()
     {
         var buckets = await minioClient.ListBucketsAsync().ConfigureAwait(false);
-        List<StorageBucketDTO> bucketDtos = [];
-        bucketDtos.AddRange(buckets.Buckets.Select(bucket => new StorageBucketDTO()
+        List<StorageBucketDto> bucketDtos = [];
+        bucketDtos.AddRange(buckets.Buckets.Select(bucket => new StorageBucketDto()
         {
             BucketName = bucket.Name, 
             BucketCreationDate = DateTime.Parse(bucket.CreationDate)

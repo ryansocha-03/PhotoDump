@@ -12,9 +12,11 @@ builder.Services.AddContentStoreConfiguration(builder.Configuration);
 
 // Register actual services
 builder.Services.AddDatabaseRepositories();
-builder.Services.AddMinIOServices(builder.Configuration, builder.Environment.EnvironmentName);
+builder.Services.AddMinIoServices(builder.Configuration, builder.Environment.EnvironmentName);
 builder.Services.AddIdentityServices();
 builder.Services.AddApiServices();
+
+builder.Services.AddSessionAuth();
 
 builder.Services.AddControllers();
 

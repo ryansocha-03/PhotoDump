@@ -1,3 +1,4 @@
+using Core.Configuration.ConfigurationModels;
 using Core.Configuration.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

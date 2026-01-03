@@ -4,5 +4,5 @@ namespace Core.Interfaces;
 
 public interface IContentStoreService
 {
-    public Task<List<StorageBucketDTO>> ListBuckets();
+    public Task<List<StorageBucketDto>> ListBuckets();
 }

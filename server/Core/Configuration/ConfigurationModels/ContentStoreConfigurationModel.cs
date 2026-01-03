@@ -1,4 +1,4 @@
-namespace Core.Configuration.Models;
+namespace Core.Configuration.ConfigurationModels;
 
 public class ContentStoreConfigurationModel
 {

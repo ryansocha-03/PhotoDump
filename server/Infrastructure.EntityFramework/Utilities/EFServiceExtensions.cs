@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.EntityFramework.Utilities;
 
-public static class EFServiceExtensions
+public static class EfServiceExtensions
 {
     public static void AddDatabaseRepositories(this IServiceCollection services)
     {
@@ -30,6 +30,7 @@ public static class EFServiceExtensions
         services.AddScoped<IRepository<EventState>, EventStateRepository>();
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IRepository<Guest>, GuestRepository>();
+        services.AddScoped<IEventSessionRepository, EventSessionRepository>();
     }
     
 }
