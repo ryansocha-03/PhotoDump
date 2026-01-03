@@ -15,6 +15,7 @@ public class AppDbContext: DbContext
     public DbSet<Admin> Admins { get; set; }
     public DbSet<Media> Media  { get; set; }
     public DbSet<MediaType> MediaTypes { get; set; }
+    public DbSet<EventSession> EventSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:18
-    hostname: ${POSTGRES_HOST}
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     restart: always
@@ -11,8 +10,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes: 
       - postgres_data:/var/lib/postgresql
-    networks:
-      - photodump-net
 
   minio:
     image: minio/minio
@@ -25,8 +22,6 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
-    networks:
-      - photodump-net
 
   app-api:
     build:
@@ -37,7 +32,7 @@ services:
       - minio
     environment:
       AppDatabase__DatabaseProvider: "postgres"
-      AppDatabase__ConnectionString: "Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
       ContentStore__ContentStoreProvider: "s3"
       ContentStore__AccessKey: "${MINIO_USER}"
       ContentStore__SecretKey: "${MINIO_PASSWORD}"
@@ -46,13 +41,7 @@ services:
     ports:
       - "8080:8080"
     restart: always
-    networks:
-      - photodump-net
 
 volumes:
   postgres_data:
   minio_data:
-
-networks:
-  photodump-net:
-    driver: bridge
