@@ -12,7 +12,10 @@ export default async function Layout({
   const eventData = await getEventLandingData(publicEventId);
 
   if (eventData.code == 404) {
-      notFound()
+      notFound();
+  }
+  else if (eventData.code == 400) {
+      notFound();
   }
   else if (eventData.code != 200) {
       throw new Error("BRUH")

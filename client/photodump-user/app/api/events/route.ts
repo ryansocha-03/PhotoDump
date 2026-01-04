@@ -1,10 +1,15 @@
-import { url } from "inspector";
-import { NextURL } from "next/dist/server/web/next-url";
+import { setSecureCookie } from "@/app/lib/auth/cookie";
+import { redirect } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
 export interface EventPasswordSubmission {
     eventPassword: string,
     eventPublicId: string
+}
+
+interface EventSessionData {
+    sessionId: string,
+    expiresAt: string
 }
 
 interface EventAuth {
@@ -44,5 +49,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
     )
 
-    return NextResponse.json({}, { status: eventAuthResponse.status })
+    if (eventAuthResponse.status == 401)
+       return NextResponse.json("Incorrect password.", { status: 401 })
+    else if (!eventAuthResponse.ok)
+        return NextResponse.json("Issue when validating event password.", { status: eventAuthResponse.status })
+
+    const sessionData: EventSessionData = await eventAuthResponse.json();
+    const response = NextResponse.json({});
+    setSecureCookie(response, sessionData.sessionId, sessionData.expiresAt);
+
+    return response;
 }

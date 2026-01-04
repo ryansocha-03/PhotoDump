@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 
 const errorMessages: string[] = [
     "Incorrect Password.",
-    "Password must contain one or more characters."
+    "Password cannot be empty.",
+    "Issue when logging in with password. Please try again."
 ]
 
 export default function EventPassword({
@@ -23,6 +24,7 @@ export default function EventPassword({
         if (password.trim().length == 0) {
             setErrorMessage(1);
             setShowErrorMessage(true);
+            return;
         }
 
         const authBody: EventPasswordSubmission = {
@@ -43,6 +45,10 @@ export default function EventPassword({
         }
         else if (authResponse.status == 401) {
             setErrorMessage(0);
+            setShowErrorMessage(true);
+        }
+        else {
+            setErrorMessage(2);
             setShowErrorMessage(true);
         }
     }
