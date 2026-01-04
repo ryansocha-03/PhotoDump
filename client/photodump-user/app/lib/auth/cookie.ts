@@ -23,3 +23,7 @@ export function setSecureCookie(response: NextResponse, sessionId: string, expir
 export function getSessionFromCookie(request: NextRequest) {
     return request.cookies.get(SESSION_COOKIE_NAME)?.value?.trim();
 }
+
+export function deleteSessionCookie(response: NextResponse) {
+    response.cookies.delete(SESSION_COOKIE_NAME);
+}
