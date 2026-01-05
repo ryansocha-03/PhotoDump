@@ -1,7 +1,6 @@
 import { addEventHeaders } from "@/app/lib/auth/api";
 import { deleteSessionCookie, getSessionFromCookie } from "@/app/lib/auth/cookie";
 import { EventGuest } from "@/app/lib/event/types";
-import { mockGuestListSearch } from "@/app/mock-data/event-mock-data";
 import { NextRequest, NextResponse } from "next/server";
 
 export interface GuestSearchSubmission {
