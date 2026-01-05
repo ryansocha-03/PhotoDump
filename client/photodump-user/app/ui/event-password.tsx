@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { EventPasswordSubmission } from "../api/events/route";
 import { useRouter } from "next/navigation";
+import LoadingThreeDots from "./loading-three-dots";
 
 const errorMessages: string[] = [
     "Incorrect Password.",
@@ -18,6 +19,7 @@ export default function EventPassword({
     const [password, setPassword] = useState("");
     const [showErrorMessage, setShowErrorMessage] = useState(false);
     const [errorMessage, setErrorMessage] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     
     const handleSubmit = async () => {
@@ -32,6 +34,8 @@ export default function EventPassword({
             eventPublicId: eventId
         }
 
+        setIsLoading(true);
+
         const authResponse = await fetch('/api/events',
             {
                 method: 'POST',
@@ -40,7 +44,6 @@ export default function EventPassword({
         )
 
         if (authResponse.ok) {
-            setShowErrorMessage(false);
             router.push(`/e/${eventId}/guests`)
         }
         else if (authResponse.status == 401) {
@@ -51,6 +54,8 @@ export default function EventPassword({
             setErrorMessage(2);
             setShowErrorMessage(true);
         }
+
+        setIsLoading(false);
     }
 
     const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -72,10 +77,16 @@ export default function EventPassword({
                     onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
-                    className="w-full rounded-md bg-(--foreground) text-(--background) text-xl hover:cursor-pointer hover:bg-gray-400"
+                    className={`w-full rounded-md bg-(--foreground) text-(--background) text-xl ${!isLoading ? 'hover:bg-gray-400 hover:cursor-pointer' : ''} flex justify-center`}
                     onClick={handleSubmit}
+                    disabled={isLoading}
                 >
-                    Go
+                    <div className="min-h-10 flex items-center">
+                    { isLoading 
+                        ? <LoadingThreeDots size={2} />
+                        : 'Go'
+                    }
+                    </div>
                 </button>
             </div>
             <div className={`text-red-400 text-wrap text-medium text-lg ${showErrorMessage ? 'block' : 'hidden'}`}>

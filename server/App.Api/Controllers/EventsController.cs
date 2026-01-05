@@ -2,6 +2,7 @@ using App.Api.Models;
 using App.Api.Models.Response;
 using App.Api.Services;
 using Core.Interfaces;
+using Identity.Models;
 using Identity.Services;
 using Identity.Services.Sessions;
 using Microsoft.AspNetCore.Authorization;
@@ -39,6 +40,24 @@ public class EventsController(EventService eventService, PasswordService passwor
         }
 
         return Unauthorized("Invalid event key.");
+    }
+
+    [HttpGet("{eventPublicId}/validate")]
+    public async Task<IActionResult> ValidateEventSession([FromRoute] Guid eventPublicId,
+        [FromHeader(Name = "X-Session-Id")] Guid sessionIdHeader,
+        [FromHeader(Name = "X-Event-Public-Id")] Guid eventPublicIdHeader)
+    {
+        if (!eventPublicIdHeader.Equals(eventPublicId))
+            return BadRequest("Event ID is invalid.");
+
+        var sessionType = await sessionService.GetSessionTypeAsync(sessionIdHeader, eventPublicIdHeader);
+        if (sessionType is null)
+            return Unauthorized();
+
+        return Ok(new SessionTypeModel
+        {
+            SessionType = sessionType.Value
+        });
     }
 
     [Authorize(AuthenticationSchemes = "SessionScheme")]

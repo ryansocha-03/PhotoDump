@@ -22,7 +22,6 @@ export default function GuestListSearch({
     const [showErrorMessage, setShowErrorMessage] = useState(false);
 
     const router = useRouter();
-    const controller = new AbortController();
 
     useEffect(() => {
         const fetchGuests = async () => {
@@ -48,6 +47,11 @@ export default function GuestListSearch({
                     }
                 }
             );
+
+            if (searchResponse.status == 401) {
+                router.push(`/e/${eventId}`);
+                return;
+            }
 
             if (!searchResponse.ok) {
                 setResults([]);
