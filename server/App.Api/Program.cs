@@ -16,7 +16,7 @@ builder.Services.AddMinIoServices(builder.Configuration, builder.Environment.Env
 builder.Services.AddIdentityServices();
 builder.Services.AddApiServices();
 
-builder.Services.AddSessionAuth();
+builder.Services.AddSessionAuth(builder.Configuration);
 
 builder.Services.AddControllers();
 

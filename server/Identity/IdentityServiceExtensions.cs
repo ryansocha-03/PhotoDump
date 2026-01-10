@@ -1,6 +1,8 @@
+using Identity.Models;
 using Identity.Services;
 using Identity.Services.Sessions;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity;
@@ -12,8 +14,10 @@ public static class IdentityServiceExtensions
       services.AddScoped<PasswordService>();
    }
 
-   public static void AddSessionAuth(this IServiceCollection services)
+   public static void AddSessionAuth(this IServiceCollection services, IConfiguration configuration)
    {
+      services.Configure<SessionAuthConfigurationModel>(configuration.GetSection("SessionAuth"));
+      
       services.AddAuthentication("SessionScheme")
          .AddScheme<AuthenticationSchemeOptions, EventSessionAuthHandler>("SessionScheme", options => { });
 

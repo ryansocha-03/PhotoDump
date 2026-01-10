@@ -1,10 +1,11 @@
 using Identity.Models;
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Repositories;
+using Microsoft.Extensions.Options;
 
 namespace Identity.Services.Sessions;
 
-public class SessionService(IEventSessionRepository  repository)
+public class SessionService(IEventSessionRepository  repository, IOptions<SessionAuthConfigurationModel> configuration)
 {
     public async Task<bool> ValidateSessionAsync(Guid sessionId, Guid eventId)
     {
@@ -26,7 +27,7 @@ public class SessionService(IEventSessionRepository  repository)
         {
             EventPublicId = eventId,
             CreatedAt = DateTimeOffset.UtcNow,
-            ExpiresAt = DateTimeOffset.UtcNow.AddHours(SessionConfiguration.SessionDuration),
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(configuration.Value.SessionDurationMinutes),
             LastSeenAt = DateTimeOffset.UtcNow
         };
         
