@@ -13,9 +13,9 @@ public static class MinIoServiceExtensions
     public static void AddMinIoServices(this IServiceCollection services, IConfiguration configuration, string environmentName)
     {
         var contentStoreConfig = configuration.GetRequiredSection("ContentStore").Get<ContentStoreConfigurationModel>();
-        Console.WriteLine(contentStoreConfig.Endpoint);
         services.AddMinio(configureClient => configureClient
             .WithEndpoint(contentStoreConfig.Endpoint)
+            .WithRegion(contentStoreConfig.Region)
             .WithCredentials(contentStoreConfig.AccessKey, contentStoreConfig.SecretKey)
             .WithSSL(environmentName.ToLower() != "development")
             .Build());

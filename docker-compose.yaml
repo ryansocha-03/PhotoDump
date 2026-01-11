@@ -11,18 +11,6 @@ services:
     volumes: 
       - postgres_data:/var/lib/postgresql
 
-  minio:
-    image: minio/minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=${MINIO_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-
   garage:
     image: dxflrs/garage:v2.1.0
     env_file:
@@ -43,14 +31,15 @@ services:
       dockerfile: server/App.Api/Dockerfile 
     depends_on:
       - db
-      - minio
+      - garage 
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
       ContentStore__ContentStoreProvider: "s3"
-      ContentStore__AccessKey: "${MINIO_USER}"
-      ContentStore__SecretKey: "${MINIO_PASSWORD}"
-      ContentStore__Endpoint: "${MINIO_ENDPOINT}"
+      ContentStore__AccessKey: "${GARAGE_APP_KEY}"
+      ContentStore__SecretKey: "${GARAGE_APP_SECRET}"
+      ContentStore__Endpoint: "garage:3900"
+      ContentStore__Region: "${GARAGE_REGION}"
       SessionAuth__SessionDurationMinutes: 240 
       DOTNET_ENVIRONMENT: "Development"
     ports:

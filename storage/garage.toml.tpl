@@ -9,7 +9,7 @@ rpc_public_addr = "127.0.0.1:3901"
 rpc_secret = "$GARAGE_RPC_KEY"
 
 [s3_api]
-s3_region = "garage"
+s3_region = "$GARAGE_REGION"
 api_bind_addr = "[::]:3900"
 root_domain = ".s3.garage.localhost"
 
