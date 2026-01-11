@@ -23,6 +23,20 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
 
+  garage:
+    image: dxflrs/garage:v2.1.0
+    env_file:
+      - .env
+    ports:
+      - "3900:3900"
+      - "3901:3901"
+      - "3902:3902"
+      - "3903:3903"
+    volumes:
+      - ./storage/garage.toml:/etc/garage.toml
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+
   app-api:
     build:
       context: .
@@ -46,3 +60,5 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  garage_meta:
+  garage_data:

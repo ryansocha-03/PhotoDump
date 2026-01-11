@@ -90,4 +90,4 @@ docs/*.tmp
 # ========================
 # S3 Storage Files
 # ========================
-storage/*
+storage/garage.toml
