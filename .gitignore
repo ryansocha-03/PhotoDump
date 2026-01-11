@@ -87,3 +87,7 @@ docker-compose.override.yml
 docs/.drawio-bak
 docs/*.tmp
 
+# ========================
+# S3 Storage Files
+# ========================
+storage/*
