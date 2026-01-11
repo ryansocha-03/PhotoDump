@@ -21,10 +21,12 @@ export default async function Page({
         if (sessionValidationResponse.ok) {
             const sessionTypeData: SessionTypeModel = await sessionValidationResponse.json();
             if (sessionTypeData.sessionType == SessionTypes.Guest)
-                redirect(`e/${publicEventId}/photos`)
+                redirect(`/e/${publicEventId}/photos`)
         } else {
             redirect(`/e/${publicEventId}`)
         }
+    } else {
+        redirect(`/e/${publicEventId}`);
     }
 
     return (

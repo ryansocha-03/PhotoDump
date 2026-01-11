@@ -5,6 +5,7 @@ import { EventGuest } from "../lib/event/types";
 import { useRouter } from "next/navigation";
 import { GuestSearchSubmission } from "../api/events/guests/route";
 import LoadingThreeDots from "./loading-three-dots";
+import { GuestLoginRequestModel } from "../api/events/guests/login/route";
 
 const errorMessages: string[] = [ 
     "No guests for provided name."
@@ -82,12 +83,31 @@ export default function GuestListSearch({
         return () => clearTimeout(debounce);
     }, [query]);
 
-    const handleGuestSelect = (guest: EventGuest, index: number) => {
+    const handleGuestSelect = async (guest: EventGuest, index: number) => {
         if (!loggingInGuest) {
             setSelectedGuest(index);
+
+            const guestData: GuestLoginRequestModel = {
+                eventId: eventId,
+                guestId: guest.guestId
+            };
+
             setLoggingInGuest(true);
+
+            const guestUpgradeResponse = await fetch('/api/events/guests/login',
+                {
+                    method: 'POST',
+                    body: JSON.stringify(guestData)
+                }
+            )
+
+            setLoggingInGuest(false);
+            
+            if (!guestUpgradeResponse.ok)
+                router.push(`/e/${eventId}`);
+            else
+                router.push(`/e/${eventId}/photos`);
         }
-//        router.push(`/e/${eventId}/photos`)
     }
     
     return (

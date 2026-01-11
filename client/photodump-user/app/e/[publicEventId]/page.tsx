@@ -23,7 +23,7 @@ export default async function Page({
             if (sessionTypeData.sessionType == SessionTypes.Anonymous)
                 redirect(`/e/${publicEventId}/guests`)
             else if (sessionTypeData.sessionType == SessionTypes.Guest)
-                redirect(`e/${publicEventId}/photos`)
+                redirect(`/e/${publicEventId}/photos`)
         }
     }
 

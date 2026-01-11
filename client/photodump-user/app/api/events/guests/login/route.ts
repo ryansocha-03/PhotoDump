@@ -27,7 +27,10 @@ export async function POST(request: NextRequest) {
     const guestLoginRequest: Request = new Request(`${process.env.APP_API_URL}/api/events/${guestData.eventId}/auth/guest`,
         {
             method: 'POST',
-            body: JSON.stringify(guestLoginData)
+            body: JSON.stringify(guestLoginData),
+            headers: {
+                'Content-Type': 'application/json'
+            }
         }
     );
     addEventHeaders(guestLoginRequest, sessionCookie, guestData.eventId);
