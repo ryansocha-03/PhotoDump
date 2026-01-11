@@ -41,11 +41,11 @@ public class EventsController(EventService eventService, PasswordService passwor
 
         return Unauthorized("Invalid event key.");
     }
-
+    
     [HttpGet("{eventPublicId}/validate")]
     public async Task<IActionResult> ValidateEventSession([FromRoute] Guid eventPublicId,
-        [FromHeader(Name = "X-Session-Id")] Guid sessionIdHeader,
-        [FromHeader(Name = "X-Event-Public-Id")] Guid eventPublicIdHeader)
+        [FromHeader(Name = SessionConfiguration.SessionHeaderName)] Guid sessionIdHeader,
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
         if (!eventPublicIdHeader.Equals(eventPublicId))
             return BadRequest("Event ID is invalid.");
@@ -58,6 +58,27 @@ public class EventsController(EventService eventService, PasswordService passwor
         {
             SessionType = sessionType.Value
         });
+    }
+
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [HttpPost("{eventPublicId}/auth/guest")]
+    public async Task<IActionResult> LoginGuestForEvent([FromRoute] Guid eventPublicId,
+        [FromHeader(Name = SessionConfiguration.SessionHeaderName)]
+        Guid sessionIdHeader,
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)]
+        Guid eventPublicIdHeader,
+        [FromBody] GuestLoginRequestModel guestData)
+    {
+        if (!eventPublicIdHeader.Equals(eventPublicId)) 
+            return BadRequest("Event ID is invalid.");
+
+        var upgradeStatus =
+            await sessionService.UpgradeSessionToGuestAsync(sessionIdHeader, eventPublicIdHeader, guestData.GuestId);
+
+        if (!upgradeStatus)
+            return BadRequest("You gave some DUMB shit!");
+        
+        return Ok();
     }
 
     [Authorize(AuthenticationSchemes = "SessionScheme")]

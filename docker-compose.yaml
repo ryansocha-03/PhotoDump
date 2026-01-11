@@ -37,6 +37,7 @@ services:
       ContentStore__AccessKey: "${MINIO_USER}"
       ContentStore__SecretKey: "${MINIO_PASSWORD}"
       ContentStore__Endpoint: "${MINIO_ENDPOINT}"
+      SessionAuth__SessionDurationMinutes: 240 
       DOTNET_ENVIRONMENT: "Development"
     ports:
       - "8080:8080"

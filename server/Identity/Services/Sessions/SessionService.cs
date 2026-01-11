@@ -5,12 +5,37 @@ using Microsoft.Extensions.Options;
 
 namespace Identity.Services.Sessions;
 
-public class SessionService(IEventSessionRepository  repository, IOptions<SessionAuthConfigurationModel> configuration)
+public class SessionService(IEventSessionRepository  repository, 
+    IEventRepository eventRepository,
+    IRepository<Guest> guestRepository, 
+    IOptions<SessionAuthConfigurationModel> configuration)
 {
     public async Task<bool> ValidateSessionAsync(Guid sessionId, Guid eventId)
     {
         var session = await repository.ValidateSessionAsync(sessionId, eventId);
         return session != null;
+    }
+
+    public async Task<bool> UpgradeSessionToGuestAsync(Guid sessionId, Guid eventId, int guestId)
+    {
+        var session = await repository.GetAsync(sessionId);
+        if (session == null)
+            return false;
+        
+        var eventData = await eventRepository.GetByPublicIdAsync(eventId);
+        if (eventData == null)
+            return false;
+        
+        var guest = await guestRepository.GetAsync(guestId);
+        if (guest == null)
+            return false;
+
+        if (guest.EventId != eventData.Id)
+            return false;
+        
+        session.GuestId = guestId;
+        await repository.UpdateAsync(session);
+        return true;
     }
 
     public async Task<SessionType?> GetSessionTypeAsync(Guid sessionId, Guid eventId)

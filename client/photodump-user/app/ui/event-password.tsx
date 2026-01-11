@@ -61,7 +61,8 @@ export default function EventPassword({
     const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key == 'Enter') {
             e.preventDefault();
-            handleSubmit();
+            if (!isLoading)
+                handleSubmit();
         }
     }
 
@@ -83,7 +84,7 @@ export default function EventPassword({
                 >
                     <div className="min-h-10 flex items-center">
                     { isLoading 
-                        ? <LoadingThreeDots size={2} />
+                        ? <LoadingThreeDots />
                         : 'Go'
                     }
                     </div>
