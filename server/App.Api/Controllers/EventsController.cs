@@ -2,6 +2,7 @@ using App.Api.Models;
 using App.Api.Models.Response;
 using App.Api.Services;
 using Core.Interfaces;
+using Core.Models;
 using Identity.Models;
 using Identity.Services;
 using Identity.Services.Sessions;
@@ -84,11 +85,44 @@ public class EventsController(EventService eventService, PasswordService passwor
     [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("{eventPublicId}/guests")]
     public async Task<IActionResult> GuestListSearch([FromRoute] Guid eventPublicId, 
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
         [FromQuery] string guestName)
     {
         if (string.IsNullOrWhiteSpace(guestName) || guestName.Length < 3) return BadRequest("Guest name must be provided and at least 3 characters");
         
-        return Ok(await eventService.FetchGuestSearchAsync(eventPublicId, guestName));
+        return Ok(await eventService.FetchGuestSearchAsync(eventPublicIdHeader, guestName));
+    }
+
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [HttpGet("{eventPublicId}/media/download")]
+    public async Task<IActionResult> GetEventPublicPhotoDownload([FromRoute] Guid eventPublicId,
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+    {
+        var downloadUrl =
+            await contentStoreService.GeneratePresignedDownloadUrl(eventPublicIdHeader, FilePrivacyEnum.Public);
+        
+        return downloadUrl is null ? StatusCode(500, "Issue creating presigned download url.") : Ok(downloadUrl);
+    }
+    
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [HttpGet("{eventPublicId}/media/upload/public")]
+    public async Task<IActionResult> GetPublicMediaUpload([FromRoute] Guid eventPublicId, 
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+    {
+        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Public);
+
+        return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
+    }
+
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [HttpGet("{eventPublicId}/media/upload/private")]
+    public async Task<IActionResult> GetPrivateMediaUpload([FromRoute] Guid eventPublicId,
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)]
+        Guid eventPublicIdHeader)
+    {
+        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Private);
+
+        return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
     }
 
     [HttpGet("buckets")]
