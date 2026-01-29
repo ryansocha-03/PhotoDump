@@ -5,7 +5,8 @@ public class ContentStoreConfigurationModel
     public required string ContentStoreProvider { get; set; }
     public string AccessKey { get; set; } = "";
     public string SecretKey { get; set; } = "";
-    public string Endpoint { get; set; } = "";
+    public string InternalEndpoint { get; set; } = "";
+    public string ExternalEndpoint { get; set; } = "";
     public string Region { get; set; } = "";
     public string Bucket { get; set; } = "photodump";
     public int PresignedDownloadDurationMinutes { get; set; } = 10;

@@ -1,0 +1,17 @@
+server {
+    listen ${PROXY_PORT};
+    server_name ${APP_API_DOMAIN};
+    location / {
+        proxy_pass http://app-api:${APP_API_PORT};
+    }
+}
+
+server {
+    listen ${PROXY_PORT};
+    server_name ${CONTENT_STORE_DOMAIN};
+    location / {
+        proxy_pass http://garage:${GARAGE_API_PORT};
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+    }
+}

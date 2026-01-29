@@ -13,17 +13,23 @@ services:
 
   garage:
     image: dxflrs/garage:v2.1.0
-    env_file:
-      - .env
-    ports:
-      - "3900:3900"
-      - "3901:3901"
-      - "3902:3902"
-      - "3903:3903"
     volumes:
       - ./storage/garage.toml:/etc/garage.toml
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
+
+  proxy:
+    image: nginx
+    volumes:
+      - ./infrastructure/proxy/nginx:/etc/nginx/templates
+    ports:
+      - "80:80"
+    environment:
+      PROXY_PORT: ${PROXY_PORT}
+      APP_API_DOMAIN: ${APP_API_DOMAIN}
+      APP_API_PORT: ${APP_API_PORT}
+      CONTENT_STORE_DOMAIN: ${CONTENT_STORE_DOMAIN}
+      GARAGE_API_PORT: ${GARAGE_API_PORT}
 
   app-api:
     build:
@@ -31,23 +37,20 @@ services:
       dockerfile: server/App.Api/Dockerfile 
     depends_on:
       - db
-      - garage 
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
       ContentStore__ContentStoreProvider: "s3"
       ContentStore__AccessKey: "${GARAGE_APP_KEY}"
       ContentStore__SecretKey: "${GARAGE_APP_SECRET}"
-      ContentStore__Endpoint: "garage:3900"
+      ContentStore__ExternalEndpoint: "${CONTENT_STORE_DOMAIN}"
+      ContentStore__InternalEndpoint: garage:${GARAGE_API_PORT}
       ContentStore__Region: "${GARAGE_REGION}"
       SessionAuth__SessionDurationMinutes: 240 
       DOTNET_ENVIRONMENT: "Development"
-    ports:
-      - "8080:8080"
     restart: always
 
 volumes:
   postgres_data:
-  minio_data:
   garage_meta:
   garage_data:

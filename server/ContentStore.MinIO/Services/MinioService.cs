@@ -1,3 +1,4 @@
+using ContentStore.MinIO.Interfaces;
 using Core.Configuration.ConfigurationModels;
 using Core.Configuration.DTOs;
 using Core.Interfaces;
@@ -9,11 +10,22 @@ using Minio.Exceptions;
 
 namespace ContentStore.MinIO.Services;
 
-public class MinioService(IMinioClient minioClient, IOptions<ContentStoreConfigurationModel> options): IContentStoreService
+public class MinioService : IContentStoreService
 {
+    private readonly IMinioClient _externalS3Client;
+    private readonly IMinioClient _internalS3Client;
+    private readonly ContentStoreConfigurationModel _contentStoreConfiguration;
+
+    public MinioService(IExternalS3Client externalS3Client, IInternalS3Client internalS3Client, IOptions<ContentStoreConfigurationModel> options)
+    {
+        _externalS3Client = externalS3Client.MinioClient;
+        _internalS3Client = internalS3Client.MinioClient;
+        _contentStoreConfiguration = options.Value;
+    }
+    
     public async Task<List<StorageBucketDto>> ListBuckets()
     {
-        var buckets = await minioClient.ListBucketsAsync();
+        var buckets = await _internalS3Client.ListBucketsAsync();
         List<StorageBucketDto> bucketDtos = [];
         bucketDtos.AddRange(buckets.Buckets.Select(bucket => new StorageBucketDto()
         {
@@ -23,16 +35,16 @@ public class MinioService(IMinioClient minioClient, IOptions<ContentStoreConfigu
         return bucketDtos;
     }
 
-    public async Task<string?> GeneratePresignedDownloadUrl(Guid eventId, FilePrivacyEnum privacy)
+    public async Task<string?> GeneratePresignedDownloadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName)
     {
         try
         {
             var args = new PresignedGetObjectArgs()
-                .WithBucket(options.Value.Bucket)
-                .WithObject($"{eventId}/{privacy.ToString().ToLower()}")
-                .WithExpiry(options.Value.PresignedDownloadDurationMinutes * 60);
+                .WithBucket(_contentStoreConfiguration.Bucket)
+                .WithObject($"{eventId}/{privacy.ToString().ToLower()}/{fileName}")
+                .WithExpiry(_contentStoreConfiguration.PresignedDownloadDurationMinutes * 60);
 
-            var url = await minioClient.PresignedGetObjectAsync(args);
+            var url = await _externalS3Client.PresignedGetObjectAsync(args);
             return url;
         }
         catch (MinioException e)
@@ -41,20 +53,39 @@ public class MinioService(IMinioClient minioClient, IOptions<ContentStoreConfigu
         }
     }
 
-    public async Task<string?> GeneratePresignedUploadUrl(Guid eventId, FilePrivacyEnum privacy)
+    public async Task<string?> GeneratePresignedUploadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName)
     {
         try
         {
             var args = new PresignedPutObjectArgs()
-                .WithBucket(options.Value.Bucket)
-                .WithObject($"{eventId}/{privacy.ToString().ToLower()}")
-                .WithExpiry(options.Value.PresignedUploadDurationMinutes * 60);
+                .WithBucket(_contentStoreConfiguration.Bucket)
+                .WithObject($"{eventId}/{privacy.ToString().ToLower()}/{fileName}")
+                .WithExpiry(_contentStoreConfiguration.PresignedUploadDurationMinutes * 60);
 
-            return await minioClient.PresignedPutObjectAsync(args);
+            return await _externalS3Client.PresignedPutObjectAsync(args);
         }
         catch (MinioException e)
         {
             return null;
         }
+    }
+
+    public async Task<List<string>> ListObjectsInBucket(Guid eventId)
+    {
+        var args = new ListObjectsArgs()
+            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithRecursive(true)
+            .WithPrefix(eventId.ToString());
+
+        var objects = _internalS3Client.ListObjectsEnumAsync(args);
+        
+        var items = new List<string>();
+        await foreach (var obj in objects)
+        {
+            items.Add(obj.Key);
+            if (items.Count > 10) break;
+        }
+
+        return items;
     }
 }

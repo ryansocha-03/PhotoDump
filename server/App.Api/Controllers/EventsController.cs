@@ -53,7 +53,7 @@ public class EventsController(EventService eventService, PasswordService passwor
 
         var sessionType = await sessionService.GetSessionTypeAsync(sessionIdHeader, eventPublicIdHeader);
         if (sessionType is null)
-            return Unauthorized();
+            return Unauthorized("No valid session for provided session id.");
 
         return Ok(new SessionTypeModel
         {
@@ -99,7 +99,7 @@ public class EventsController(EventService eventService, PasswordService passwor
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
         var downloadUrl =
-            await contentStoreService.GeneratePresignedDownloadUrl(eventPublicIdHeader, FilePrivacyEnum.Public);
+            await contentStoreService.GeneratePresignedDownloadUrl(eventPublicIdHeader, FilePrivacyEnum.Public, "TestText.txt");
         
         return downloadUrl is null ? StatusCode(500, "Issue creating presigned download url.") : Ok(downloadUrl);
     }
@@ -109,7 +109,7 @@ public class EventsController(EventService eventService, PasswordService passwor
     public async Task<IActionResult> GetPublicMediaUpload([FromRoute] Guid eventPublicId, 
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
-        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Public);
+        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Public, "TestText.txt");
 
         return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
     }
@@ -120,7 +120,7 @@ public class EventsController(EventService eventService, PasswordService passwor
         [FromHeader(Name = SessionConfiguration.EventHeaderName)]
         Guid eventPublicIdHeader)
     {
-        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Private);
+        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Private, "TestText.txt");
 
         return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
     }
@@ -130,5 +130,15 @@ public class EventsController(EventService eventService, PasswordService passwor
     {
         var buckets = await contentStoreService.ListBuckets();
         return Ok(buckets);
+    }
+
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [HttpGet("buckets/list")]
+    public async Task<IActionResult> ListObjects(
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+    {
+        var items = await contentStoreService.ListObjectsInBucket(eventPublicIdHeader);
+        
+        return Ok(items);
     }
 }
