@@ -30,6 +30,9 @@ services:
       APP_API_PORT: ${APP_API_PORT}
       CONTENT_STORE_DOMAIN: ${CONTENT_STORE_DOMAIN}
       GARAGE_API_PORT: ${GARAGE_API_PORT}
+    depends_on:
+      - app-api
+      - garage
 
   app-api:
     build:
@@ -37,6 +40,7 @@ services:
       dockerfile: server/App.Api/Dockerfile 
     depends_on:
       - db
+      - garage
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
