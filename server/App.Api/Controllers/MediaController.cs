@@ -1,3 +1,4 @@
+using App.Api.Models.Request;
 using Core.Interfaces;
 using Core.Models;
 using Identity.Services.Sessions;
@@ -22,21 +23,16 @@ public class MediaController(IContentStoreService contentStoreService) : Control
     }
     
     [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpGet("upload/public")]
-    public async Task<IActionResult> GetPublicMediaUpload( 
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+    [HttpGet("upload")]
+    public async Task<IActionResult> UploadMediaForEvent( 
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
+        [FromBody] MediaUploadRequestModel mediaUploadData)
     {
+        if (mediaUploadData.MediaUploadInfo.Count == 0)
+            return BadRequest("No uploads? Alright idiot.");
+        // write files to database
+        // generate and return presigned URLs 
         var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Public, "TestText.txt");
-
-        return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
-    }
-
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpGet("upload/private")]
-    public async Task<IActionResult> GetPrivateMediaUpload(
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
-    {
-        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Private, "TestText.txt");
 
         return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
     }
