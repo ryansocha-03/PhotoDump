@@ -12,6 +12,7 @@ public class Event
     public int DurationDays { get; set; }
     public string EventPasswordHash { get; set; }
     
+    public IEnumerable<Media> Media { get; set; }
     public int EventStateId { get; set; }
     public EventState EventState { get; set; }
     public int EventTypeId { get; set; }

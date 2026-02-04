@@ -1,4 +1,4 @@
-namespace Infrastructure.EntityFramework.Repositories;
+namespace Infrastructure.EntityFramework.Repositories.Interfaces;
 
 public interface IRepository<T>
 {

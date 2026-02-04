@@ -2,6 +2,7 @@ using Core.Configuration.Models;
 using Infrastructure.EntityFramework.Contexts;
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Repositories;
+using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

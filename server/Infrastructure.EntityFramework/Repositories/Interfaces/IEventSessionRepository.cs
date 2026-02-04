@@ -1,6 +1,6 @@
 using Infrastructure.EntityFramework.Models;
 
-namespace Infrastructure.EntityFramework.Repositories;
+namespace Infrastructure.EntityFramework.Repositories.Interfaces;
 
 public interface IEventSessionRepository
 {

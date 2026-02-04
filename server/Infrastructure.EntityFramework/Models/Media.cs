@@ -5,12 +5,15 @@ public class Media
     public int Id { get; set; }
     
     public string FileName { get; set; }
+    public string PublicFileName { get; set; } 
     public long OriginalSize { get; set; }
     public bool IsDeleted { get; set; }
     public int DownloadCount { get; set; }
-    public string Url { get; set; }
+    public string? Url { get; set; }
     public bool IsPrivate { get; set; }
     
+    public int EventId{ get; set; }
+    public Event Event { get; set; }
     public int GuestId { get; set; }
     public Guest Guest { get; set; }
     public int MediaTypeId { get; set; }

@@ -13,6 +13,11 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
             .IsRequired();
         
         builder
+            .Property(m => m.PublicFileName)
+            .HasMaxLength(64)
+            .IsRequired();
+        
+        builder
             .Property(m => m.OriginalSize)
             .IsRequired();
 
@@ -25,10 +30,6 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
             .Property(m => m.DownloadCount)
             .HasDefaultValue(0)
             .IsRequired();
-
-        builder
-            .Property(m => m.Url)
-            .IsRequired();
         
         builder
             .Property(m => m.IsPrivate)
@@ -40,5 +41,11 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
             .WithMany(mt => mt.Media)
             .HasForeignKey(m => m.MediaTypeId)
             .OnDelete(DeleteBehavior.Restrict);
+        
+        builder
+            .HasOne(m => m.Event)
+            .WithMany(e => e.Media)
+            .HasForeignKey(m => m.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

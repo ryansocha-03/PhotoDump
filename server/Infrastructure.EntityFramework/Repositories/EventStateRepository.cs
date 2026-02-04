@@ -1,5 +1,6 @@
 using Infrastructure.EntityFramework.Contexts;
 using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.EntityFramework.Repositories;

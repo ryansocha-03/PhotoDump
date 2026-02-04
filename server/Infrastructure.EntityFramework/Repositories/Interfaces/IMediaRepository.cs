@@ -1,8 +1,10 @@
 using Infrastructure.EntityFramework.Models;
 
-namespace Infrastructure.EntityFramework.Repositories;
+namespace Infrastructure.EntityFramework.Repositories.Interfaces;
 
 public interface IMediaRepository : IRepository<Media>
 {
-    public Task<IEnumerable<Media>> AddMultipleAsync(IEnumerable<Media> entities);
+    public Task AddMultipleAsync(IEnumerable<Media> entities);
+    
+    public Task<IEnumerable<Media>> GetAllAsync(int eventId);
 }

@@ -1,36 +1,57 @@
+using Infrastructure.EntityFramework.Contexts;
 using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.EntityFramework.Repositories;
 
-public class MediaRepository : IMediaRepository
+public class MediaRepository(AppDbContext context) : IMediaRepository
 {
-    public Task<Media?> GetAsync(int id)
+    public async Task<Media?> GetAsync(int id)
     {
-        throw new NotImplementedException();
+        return await context.Media.FindAsync(id);
     }
 
-    public Task<IEnumerable<Media>> GetAllAsync()
+    public async Task<IEnumerable<Media>> GetAllAsync()
     {
-        throw new NotImplementedException();
+        return await context.Media.ToListAsync();
     }
 
-    public Task<Media> AddAsync(Media entity)
+    public async Task<IEnumerable<Media>> GetAllAsync(int eventId)
     {
-        throw new NotImplementedException();
+        return await context.Media.Where(e => e.EventId == eventId).ToListAsync();
     }
 
-    public Task<bool> DeleteAsync(int id)
+    public async Task<Media> AddAsync(Media entity)
     {
-        throw new NotImplementedException();
+        await context.Media.AddAsync(entity);
+        await context.SaveChangesAsync();
+        return entity;
     }
 
-    public Task<Media?> UpdateAsync(Media entity)
+    public async Task<bool> DeleteAsync(int id)
     {
-        throw new NotImplementedException();
+        var entity = await context.Media.FindAsync(id);
+        if  (entity is null)
+            return false;   
+        context.Media.Remove(entity);
+        await context.SaveChangesAsync();
+        return true;
     }
 
-    public Task<IEnumerable<Media>> AddMultipleAsync(IEnumerable<Media> entities)
+    public async Task<Media?> UpdateAsync(Media entity)
     {
-        throw new NotImplementedException();
+        var mediaToUpdate = await context.Media.FindAsync(entity.Id);
+        if (mediaToUpdate is null)
+            return null;
+        context.Entry(mediaToUpdate).CurrentValues.SetValues(entity);
+        await context.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task AddMultipleAsync(IEnumerable<Media> entities)
+    {
+        await context.Media.AddRangeAsync(entities);
+        await context.SaveChangesAsync();
     }
 }

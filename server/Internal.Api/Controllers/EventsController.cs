@@ -1,5 +1,6 @@
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Repositories;
+using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Internal.Api.Controllers;
