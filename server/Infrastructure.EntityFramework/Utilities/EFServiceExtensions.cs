@@ -29,9 +29,11 @@ public static class EfServiceExtensions
 
         services.AddScoped<IRepository<EventType>, EventTypeRepository>();
         services.AddScoped<IRepository<EventState>, EventStateRepository>();
+        services.AddScoped<IRepository<MediaType>, MediaTypeRepository>();
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IRepository<Guest>, GuestRepository>();
         services.AddScoped<IEventSessionRepository, EventSessionRepository>();
+        services.AddScoped<IMediaRepository, MediaRepository>();
     }
     
 }

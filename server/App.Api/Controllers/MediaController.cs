@@ -1,4 +1,5 @@
 using App.Api.Models.Request;
+using App.Api.Services;
 using Core.Interfaces;
 using Core.Models;
 using Identity.Services.Sessions;
@@ -9,7 +10,7 @@ namespace App.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class MediaController(IContentStoreService contentStoreService) : ControllerBase
+public class MediaController(IContentStoreService contentStoreService, MediaService mediaService, EventService eventService) : ControllerBase
 {
    [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("download")]
@@ -22,19 +23,25 @@ public class MediaController(IContentStoreService contentStoreService) : Control
         return downloadUrl is null ? StatusCode(500, "Issue creating presigned download url.") : Ok(downloadUrl);
     }
     
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpGet("upload")]
+    [HttpPost("upload")]
     public async Task<IActionResult> UploadMediaForEvent( 
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
         [FromBody] MediaUploadRequestModel mediaUploadData)
     {
         if (mediaUploadData.MediaUploadInfo.Count == 0)
             return BadRequest("No uploads? Alright idiot.");
-        // write files to database
-        // generate and return presigned URLs 
-        var uploadUrl = await contentStoreService.GeneratePresignedUploadUrl(eventPublicIdHeader, FilePrivacyEnum.Public, "TestText.txt");
 
-        return uploadUrl is null ? StatusCode(500, "Issue creating presigned upload url.") : Ok(uploadUrl);
+        var eventData = await eventService.FetchLandingDetailsAsync(eventPublicIdHeader);
+        if  (eventData is null)
+            return NotFound("No event found.");
+        
+        // write files to database
+        var publicFileNames = await mediaService.UploadMedia(mediaUploadData.MediaUploadInfo,
+            eventData.Id,
+            mediaUploadData.IsPrivate);
+        
+        return Ok(publicFileNames); 
+        // generate and return presigned URLs 
     }
 
     [HttpGet("buckets")]
@@ -53,4 +60,10 @@ public class MediaController(IContentStoreService contentStoreService) : Control
         
         return Ok(items);
     } 
+    
+    [HttpGet("list/{eventId}")]
+    public async Task<IActionResult> ListMediaForEvent([FromRoute] int eventId)
+    {
+        return Ok(await mediaService.GetMediaForEvent(eventId));
+    }
 }
