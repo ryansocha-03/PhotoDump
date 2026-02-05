@@ -30,7 +30,7 @@ export default async function EventPhotosPage({
 
     return (
         <>
-            <PhotoWrapper />
+            <PhotoWrapper eventId={publicEventId} />
         </>
     )
 }

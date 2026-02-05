@@ -10,7 +10,11 @@ export enum PhotoMode {
     Add
 }
 
-export default function PhotoWrapper() {
+export default function PhotoWrapper({
+    eventId
+}: {
+    eventId: string
+}) {
     const [photoMode, setPhotoMode] = useState<PhotoMode>(PhotoMode.Default);
 
     const switchToSelectMode = () => {
@@ -34,7 +38,7 @@ export default function PhotoWrapper() {
                     </div>
                 </div>
             </div>
-            <PhotoGallery /> 
+            <PhotoGallery eventId={eventId} /> 
         </>
     )
 }
