@@ -1,5 +1,4 @@
-import { setSecureCookie } from "@/app/lib/auth/cookie";
-import { redirect } from "next/navigation";
+import { EVENT_HEADER_NAME, setSecureCookie } from "@/app/lib/auth/cookie";
 import { NextRequest, NextResponse } from "next/server";
 
 export interface EventPasswordSubmission {
@@ -30,24 +29,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return NextResponse.json("Fields eventPassword and eventPublicId are required and cannot be empty.", { status: 400 })
     }
 
-    if (process.env.APP_ENVIRONMENT == 'local') {
-        return NextResponse.json({});
-    }
-
     const authBody: EventAuth = {
         EventKey: requestData.eventPassword
     }
 
-    const eventAuthResponse = await fetch(
-        `${process.env.APP_API_URL}/api/events/${requestData.eventPublicId}/auth`,
+    const eventAuthRequest = new Request(`${process.env.APP_API_URL}/auth/event`,
         {
-            method: 'POST',
             body: JSON.stringify(authBody),
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
         }
-    )
+    );
+    eventAuthRequest.headers.append(EVENT_HEADER_NAME, requestData.eventPublicId);
+
+    const eventAuthResponse = await fetch(eventAuthRequest);
 
     if (eventAuthResponse.status == 401)
        return NextResponse.json("Incorrect password.", { status: 401 })

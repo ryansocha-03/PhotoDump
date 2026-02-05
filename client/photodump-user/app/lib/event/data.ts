@@ -1,5 +1,6 @@
 import { ApiResponseModel } from "../types";
 import { EventLandingData } from "./types";
+import { EVENT_HEADER_NAME } from "../auth/cookie";
 
 export async function getEventLandingData(eventPublicId: string) : Promise<ApiResponseModel<EventLandingData>> {
    let eventData: ApiResponseModel<EventLandingData> = {
@@ -9,7 +10,9 @@ export async function getEventLandingData(eventPublicId: string) : Promise<ApiRe
     
     let eventDataResponse: Response;
     try {
-        eventDataResponse = await fetch(`${process.env.APP_API_URL}/api/events/${eventPublicId}`);
+        const eventDataRequest = new Request(`${process.env.APP_API_URL}/events/landing`);
+        eventDataRequest.headers.append(EVENT_HEADER_NAME, eventPublicId);
+        eventDataResponse = await fetch(eventDataRequest);
     }
     catch (e) {
         eventData.code = 500;

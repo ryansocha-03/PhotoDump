@@ -90,7 +90,7 @@ export default function EventPassword({
                     </div>
                 </button>
             </div>
-            <div className={`text-red-400 text-wrap text-medium text-lg ${showErrorMessage ? 'block' : 'hidden'}`}>
+            <div className={`text-center text-red-400 text-wrap text-medium text-lg ${showErrorMessage ? 'block' : 'hidden'}`}>
                 {errorMessages[errorMessage]}
             </div>
         </>

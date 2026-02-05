@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) : Promise<NextResponse> {
     if (!sessionCookie)
         return NextResponse.json([], { status: 401 });
 
-    const guestSearchRequest: Request = new Request(`${process.env.APP_API_URL}/api/events/${requestData.eventId}/guests?guestName=${requestData.guestName}`);
+    const guestSearchRequest: Request = new Request(`${process.env.APP_API_URL}/events/guests?guestName=${requestData.guestName}`);
     addEventHeaders(guestSearchRequest, sessionCookie, requestData.eventId);    
 
     const guestSearchResponse = await fetch(guestSearchRequest);

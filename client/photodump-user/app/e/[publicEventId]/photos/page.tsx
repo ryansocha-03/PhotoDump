@@ -14,7 +14,7 @@ export default async function EventPhotosPage({
     const sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
     if (sessionId) {
-        const sessionValidationRequest = new Request(`${process.env.APP_API_URL}/api/events/${publicEventId}/validate`)
+        const sessionValidationRequest = new Request(`${process.env.APP_API_URL}/auth/validate`)
         addEventHeaders(sessionValidationRequest, sessionId, publicEventId);
         const sessionValidationResponse = await fetch(sessionValidationRequest);
         if (sessionValidationResponse.ok) {
