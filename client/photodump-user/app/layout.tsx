@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${cormorant.className} antialiased`}
+        className={`${cormorant.className} m-8 antialiased`}
       >
         {children}
       </body>

@@ -1,6 +1,7 @@
 import { addEventHeaders } from "@/app/lib/auth/api";
 import { SESSION_COOKIE_NAME } from "@/app/lib/auth/cookie";
 import { SessionTypeModel, SessionTypes } from "@/app/lib/auth/session-types";
+import PhotoWrapper from "@/app/ui/photos/photo-wrapper";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -28,8 +29,8 @@ export default async function EventPhotosPage({
     }
 
     return (
-        <div>
-            Event Photos yer
-        </div>
+        <>
+            <PhotoWrapper />
+        </>
     )
 }

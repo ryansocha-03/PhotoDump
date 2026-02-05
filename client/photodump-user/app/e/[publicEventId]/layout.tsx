@@ -22,9 +22,9 @@ export default async function Layout({
   }
 
   return (
-    <div>
-        <div className="text-4xl m-8 text-center">{eventData.data?.eventName}</div>
+    <>
+        <header className="text-4xl mb-8 text-center">{eventData?.data?.eventName}</header>
         {children}
-    </div>
+    </>
   );
 }
