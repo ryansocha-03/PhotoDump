@@ -12,7 +12,7 @@ namespace App.Api.Controllers;
 [Route("[controller]")]
 public class MediaController(IContentStoreService contentStoreService, MediaService mediaService, EventService eventService) : ControllerBase
 {
-   [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("download")]
     public async Task<IActionResult> GetEventPublicPhotoDownload(
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicId)
@@ -23,6 +23,7 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         return downloadUrl is null ? StatusCode(500, "Issue creating presigned download url.") : Ok(downloadUrl);
     }
     
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpPost("upload")]
     public async Task<IActionResult> UploadMediaForEvent( 
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
@@ -36,12 +37,38 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             return NotFound("No event found.");
         
         // write files to database
-        var publicFileNames = await mediaService.UploadMedia(mediaUploadData.MediaUploadInfo,
-            eventData.Id,
-            mediaUploadData.IsPrivate);
+        List<string> publicFileNames;
+        try
+        {
+            publicFileNames = await mediaService.UploadMedia(mediaUploadData.MediaUploadInfo,
+                eventData.Id,
+                mediaUploadData.IsPrivate);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            return StatusCode(500, "Unexpected error occured while uploading media."); 
+        }
+
+        if (publicFileNames.Count == 0)
+            return BadRequest("Unsupported file type(s).");
         
-        return Ok(publicFileNames); 
         // generate and return presigned URLs 
+        IEnumerable<string> urls;
+        try
+        {
+            urls = await contentStoreService.GenerateBulkPresignedUploadUrls(
+                publicFileNames, 
+                eventPublicIdHeader.ToString(),
+                mediaUploadData.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            return StatusCode(500, "Unexpected error occured while generating uploads.");
+        }
+        
+        return Ok(urls);
     }
 
     [HttpGet("buckets")]

@@ -1,4 +1,5 @@
 using App.Api.Models.Request;
+using ContentStore.MinIO.Utilities;
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 
@@ -8,34 +9,50 @@ public class MediaService(IMediaRepository mediaRepository)
 {
     public async Task<List<string>> UploadMedia(List<MediaUploadInfo> mediaUploadInfo, int eventId, bool isPrivate)
     {
-        List<string> publicFileNames = new List<string>();
-        IEnumerable<Media> mediaEntities = mediaUploadInfo.Select(m =>
-            {
-                var publicFileName = GeneratePublicFileName();
-                publicFileNames.Add(publicFileName);
-                return new Media
-                {
-                    FileName = m.FileName,
-                    PublicFileName = publicFileName,
-                    OriginalSize = m.FileSize,
-                    IsPrivate = isPrivate,
-                    EventId = eventId,
-                };
-            }
-        );
+        List<string> publicFileNames = [];
+        List<Media> mediaEntities = [];
         
+        foreach (var media in mediaUploadInfo)
+        {
+            var fileExtension = GetFileExtension(media.FileName);
+            if (!IsValidFileType(fileExtension))
+                return [];
+
+            var publicFileName = $"{GeneratePublicFileName()}{fileExtension}";
+            publicFileNames.Add(publicFileName);
+            mediaEntities.Add(new Media
+            {
+                FileName = media.FileName,
+                PublicFileName = publicFileName,
+                OriginalSize = media.FileSize,
+                IsPrivate = isPrivate,
+                EventId = eventId,
+                MediaTypeId = 1
+            });
+        }
+
         await mediaRepository.AddMultipleAsync(mediaEntities);
 
         return publicFileNames;
     }
 
-    private string GeneratePublicFileName()
-    {
-        return Guid.NewGuid().ToString("N");
-    }
-
     public async Task<IEnumerable<Media>> GetMediaForEvent(int eventId)
     {
         return await mediaRepository.GetAllAsync(eventId);
+    }
+
+    private static string GetFileExtension(string fileName)
+    {
+        return Path.GetExtension(fileName);
+    }
+    
+    private static bool IsValidFileType(string fileExtension)
+    {
+        return SupportedFileTypes.SupportedFileExtensions.Contains(fileExtension);
+    } 
+
+    private static string GeneratePublicFileName()
+    {
+        return Guid.NewGuid().ToString("N");
     }
 }

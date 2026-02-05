@@ -36,18 +36,4 @@ public class EventsController(EventService eventService): ControllerBase
         
         return Ok(await eventService.FetchGuestSearchAsync(eventPublicIdHeader, guestName));
     }
-
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpPost("{eventPublicId}/media/upload")]
-    public async Task<IActionResult> EventMediaUpload([FromRoute] Guid eventPublicId,
-        [FromHeader(Name = SessionConfiguration.SessionHeaderName)] Guid sessionIdHeader,
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
-        [FromBody] MediaUploadRequestModel  mediaUploadRequest) 
-    {
-        if (!eventPublicIdHeader.Equals(eventPublicId)) return BadRequest("Event ID is invalid.");
-        if (mediaUploadRequest.MediaUploadInfo.Count == 0) return BadRequest("No media files uploaded.");
-
-          
-        return Ok();
-    }
 }

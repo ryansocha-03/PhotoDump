@@ -10,6 +10,8 @@ public interface IContentStoreService
     public Task<string?> GeneratePresignedDownloadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName);
     
     public Task<string?> GeneratePresignedUploadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName);
+
+    public Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames, string eventId, FilePrivacyEnum privacy);
     
     public Task<List<string>> ListObjectsInBucket(Guid eventId);
 }

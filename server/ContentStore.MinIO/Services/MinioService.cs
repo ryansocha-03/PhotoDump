@@ -10,19 +10,16 @@ using Minio.Exceptions;
 
 namespace ContentStore.MinIO.Services;
 
-public class MinioService : IContentStoreService
+public class MinioService(
+    IExternalS3Client externalS3Client,
+    IInternalS3Client internalS3Client,
+    IOptions<ContentStoreConfigurationModel> options)
+    : IContentStoreService
 {
-    private readonly IMinioClient _externalS3Client;
-    private readonly IMinioClient _internalS3Client;
-    private readonly ContentStoreConfigurationModel _contentStoreConfiguration;
+    private readonly IMinioClient _externalS3Client = externalS3Client.MinioClient;
+    private readonly IMinioClient _internalS3Client = internalS3Client.MinioClient;
+    private readonly ContentStoreConfigurationModel _contentStoreConfiguration = options.Value;
 
-    public MinioService(IExternalS3Client externalS3Client, IInternalS3Client internalS3Client, IOptions<ContentStoreConfigurationModel> options)
-    {
-        _externalS3Client = externalS3Client.MinioClient;
-        _internalS3Client = internalS3Client.MinioClient;
-        _contentStoreConfiguration = options.Value;
-    }
-    
     public async Task<List<StorageBucketDto>> ListBuckets()
     {
         var buckets = await _internalS3Client.ListBucketsAsync();
@@ -35,6 +32,25 @@ public class MinioService : IContentStoreService
         return bucketDtos;
     }
 
+    public async Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames,
+        string eventId, FilePrivacyEnum privacy)
+    {
+        List<string> urls = []; 
+        var privacyString = privacy.ToString().ToLower(); 
+
+        var args = new PresignedPutObjectArgs()
+            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithExpiry(_contentStoreConfiguration.PresignedUploadDurationMinutes * 60);
+        
+        foreach (var fileName in fileNames)
+        {
+            args.WithObject($"{eventId}/{privacyString}/{fileName}");
+            urls.Add(await _externalS3Client.PresignedPutObjectAsync(args));
+        }
+
+        return urls;
+    }
+    
     public async Task<string?> GeneratePresignedDownloadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName)
     {
         try
