@@ -50,7 +50,25 @@ public class MinioService(
 
         return urls;
     }
-    
+
+    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<string> fileNames, string eventId, FilePrivacyEnum privacy)
+    {
+        List<string> urls = [];
+        var privacyString = privacy.ToString().ToLower();
+        
+        var args = new PresignedGetObjectArgs()
+            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithExpiry(_contentStoreConfiguration.PresignedDownloadDurationMinutes * 60);
+
+        foreach (var fileName in fileNames)
+        {
+            args.WithObject($"{eventId}/{privacyString}/{fileName}");
+            urls.Add(await _externalS3Client.PresignedGetObjectAsync(args));
+        }
+        
+        return urls;
+    }
+
     public async Task<string?> GeneratePresignedDownloadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName)
     {
         try

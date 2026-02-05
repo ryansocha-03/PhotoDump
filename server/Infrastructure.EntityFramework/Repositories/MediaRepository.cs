@@ -17,9 +17,14 @@ public class MediaRepository(AppDbContext context) : IMediaRepository
         return await context.Media.ToListAsync();
     }
 
-    public async Task<IEnumerable<Media>> GetAllAsync(int eventId)
+    public IEnumerable<Media> GetAll(int eventId)
     {
-        return await context.Media.Where(e => e.EventId == eventId).ToListAsync();
+        return context.Media.Where(e => e.EventId == eventId);
+    }
+
+    public IEnumerable<Media> GetAll(int eventId, bool isPrivate)
+    {
+        return context.Media.Where(m => m.EventId == eventId && m.IsPrivate == isPrivate);
     }
 
     public async Task<Media> AddAsync(Media entity)

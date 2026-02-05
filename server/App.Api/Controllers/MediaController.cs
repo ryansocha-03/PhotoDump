@@ -14,13 +14,42 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
 {
     [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("download")]
-    public async Task<IActionResult> GetEventPublicPhotoDownload(
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicId)
+    public async Task<IActionResult> GetEventPublicMediaDownload(
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
-        var downloadUrl =
-            await contentStoreService.GeneratePresignedDownloadUrl(eventPublicId, FilePrivacyEnum.Public, "TestText.txt");
+        var eventInfo = await eventService.FetchLandingDetailsAsync(eventPublicIdHeader);
+        if (eventInfo is null)
+            return NotFound("No event found.");
+
+        List<string> publicFileNames;
+        try
+        {
+            publicFileNames = mediaService.GetMediaForEvent(eventInfo.Id, false);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            return StatusCode(500, "Unexpected error when getting media.");
+        }
         
-        return downloadUrl is null ? StatusCode(500, "Issue creating presigned download url.") : Ok(downloadUrl);
+        if (publicFileNames.Count == 0)
+            return Ok(new List<string>());
+
+        IEnumerable<string> urls;
+        try
+        {
+            urls = await contentStoreService.GenerateBulkPresignedDownloadUrls(
+                publicFileNames,
+                eventPublicIdHeader.ToString(),
+                FilePrivacyEnum.Public);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex);
+            return StatusCode(500, "Unexpected error when generating downloads.");
+        }
+
+        return Ok(urls);
     }
     
     [Authorize(AuthenticationSchemes = "SessionScheme")]
@@ -89,8 +118,8 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
     } 
     
     [HttpGet("list/{eventId}")]
-    public async Task<IActionResult> ListMediaForEvent([FromRoute] int eventId)
+    public IActionResult ListMediaForEvent([FromRoute] int eventId)
     {
-        return Ok(await mediaService.GetMediaForEvent(eventId));
+        return Ok(mediaService.GetAllMediaForEvent(eventId));
     }
 }

@@ -36,9 +36,15 @@ public class MediaService(IMediaRepository mediaRepository)
         return publicFileNames;
     }
 
-    public async Task<IEnumerable<Media>> GetMediaForEvent(int eventId)
+    public List<Media> GetAllMediaForEvent(int eventId)
     {
-        return await mediaRepository.GetAllAsync(eventId);
+        return mediaRepository.GetAll(eventId).ToList();
+    }
+
+    public List<string> GetMediaForEvent(int eventId,  bool isPrivate)
+    {
+        var mediaData = mediaRepository.GetAll(eventId, isPrivate);
+        return mediaData.Select(m => m.PublicFileName).ToList();
     }
 
     private static string GetFileExtension(string fileName)
