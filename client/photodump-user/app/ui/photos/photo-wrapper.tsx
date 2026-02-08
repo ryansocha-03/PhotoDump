@@ -11,9 +11,9 @@ export enum PhotoMode {
 }
 
 export default function PhotoWrapper({
-    eventId
+    mediaMetadata
 }: {
-    eventId: string
+    mediaMetadata: string[]
 }) {
     const [photoMode, setPhotoMode] = useState<PhotoMode>(PhotoMode.Default);
 
@@ -38,7 +38,7 @@ export default function PhotoWrapper({
                     </div>
                 </div>
             </div>
-            <PhotoGallery eventId={eventId} /> 
+            <PhotoGallery mediaMetadata={mediaMetadata} /> 
         </>
     )
 }

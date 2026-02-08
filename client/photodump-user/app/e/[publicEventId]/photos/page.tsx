@@ -28,9 +28,19 @@ export default async function EventPhotosPage({
         redirect(`/e/${publicEventId}`);
     }
 
+    const eventPhotoDownload = new Request(`${process.env.APP_API_URL}/media/download`);
+    addEventHeaders(eventPhotoDownload, sessionId, publicEventId);
+
+    const eventDownloadResponse = await fetch(eventPhotoDownload);
+    
+    let imageMetaData: string[] = [];
+    if (eventDownloadResponse.ok) {
+        imageMetaData = await eventDownloadResponse.json();
+    }
+
     return (
         <>
-            <PhotoWrapper eventId={publicEventId} />
+            <PhotoWrapper mediaMetadata={imageMetaData} />
         </>
     )
 }
