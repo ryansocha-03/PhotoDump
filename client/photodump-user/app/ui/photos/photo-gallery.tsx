@@ -1,5 +1,7 @@
 'use client'
 
+import PhotoItem from "./photo-item"
+
 export default function PhotoGallery({
     mediaMetadata
 }: {
@@ -12,10 +14,7 @@ export default function PhotoGallery({
                 mediaMetadata.length == 0
                 ? <div>No event photos yet. Upload public photos to share with other guests.</div>
                 : mediaMetadata.map((m, i) => (
-                    <img
-                        key={`thumbnail-${i}`}
-                        src={m}
-                    />
+                    <PhotoItem key={`thumbnail-${i}`} photoData={m}/>
                 ))
             }
         </div>
