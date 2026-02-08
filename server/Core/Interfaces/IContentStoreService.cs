@@ -14,6 +14,7 @@ public interface IContentStoreService
     public Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames, string eventId, FilePrivacyEnum privacy);
     
     public Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<string> fileNames, string eventId, FilePrivacyEnum privacy);
-    
+
+    public Task<bool> DeleteMediaFromEvent(Guid eventId, FilePrivacyEnum privacy, string fileName);
     public Task<List<string>> ListObjectsInBucket(Guid eventId);
 }

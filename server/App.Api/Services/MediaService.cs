@@ -46,6 +46,16 @@ public class MediaService(IMediaRepository mediaRepository)
         var mediaData = mediaRepository.GetAll(eventId, isPrivate);
         return mediaData.Select(m => m.PublicFileName).ToList();
     }
+    
+    public async Task<bool> DeleteMedia(int id)
+    {
+        return await mediaRepository.DeleteAsync(id);
+    }
+
+    public async Task<Media?> GetSpecificMedia(int mediaId)
+    {
+        return await mediaRepository.GetAsync(mediaId);
+    }
 
     private static string GetFileExtension(string fileName)
     {
@@ -61,4 +71,6 @@ public class MediaService(IMediaRepository mediaRepository)
     {
         return Guid.NewGuid().ToString("N");
     }
+
+    
 }

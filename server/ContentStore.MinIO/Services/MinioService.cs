@@ -104,6 +104,24 @@ public class MinioService(
         }
     }
 
+    public async Task<bool> DeleteMediaFromEvent(Guid eventId, FilePrivacyEnum privacy, string fileName)
+    {
+        var args = new RemoveObjectArgs()
+            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithObject($"{eventId}/{privacy.ToString().ToLower()}/{fileName}");
+
+        try
+        {
+            await _internalS3Client.RemoveObjectAsync(args);
+        }
+        catch
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task<List<string>> ListObjectsInBucket(Guid eventId)
     {
         var args = new ListObjectsArgs()

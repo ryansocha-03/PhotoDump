@@ -122,4 +122,21 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
     {
         return Ok(mediaService.GetAllMediaForEvent(eventId));
     }
+
+    [HttpGet("delete/{mediaId}")]
+    public async Task<IActionResult> DeleteMediaFromEvent([FromRoute] int mediaId,
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+    {  
+        var media = await mediaService.GetSpecificMedia(mediaId);
+        if (media is null)
+            return NotFound("No media found.");
+        
+        await mediaService.DeleteMedia(mediaId);
+        await contentStoreService.DeleteMediaFromEvent(
+            eventPublicIdHeader, 
+            media.IsPrivate ?  FilePrivacyEnum.Private : FilePrivacyEnum.Public,
+            media.PublicFileName);
+
+        return Ok();
+    }
 }
