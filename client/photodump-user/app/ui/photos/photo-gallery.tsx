@@ -9,7 +9,7 @@ export default function PhotoGallery({
 }) {
 
     return (
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-2 lg:gap-6">
             {
                 mediaMetadata.length == 0
                 ? <div>No event photos yet. Upload public photos to share with other guests.</div>
