@@ -1,4 +1,5 @@
 using App.Api.Models.Request;
+using App.Api.Models.Response;
 using App.Api.Services;
 using Core.Interfaces;
 using Core.Models;
@@ -83,21 +84,27 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             return BadRequest("Unsupported file type(s).");
         
         // generate and return presigned URLs 
-        IEnumerable<string> urls;
+        List<string> urls;
         try
         {
-            urls = await contentStoreService.GenerateBulkPresignedUploadUrls(
+            urls = (await contentStoreService.GenerateBulkPresignedUploadUrls(
                 publicFileNames, 
                 eventPublicIdHeader.ToString(),
-                mediaUploadData.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public);
+                mediaUploadData.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public)).ToList();;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine(ex);
             return StatusCode(500, "Unexpected error occured while generating uploads.");
         }
-        
-        return Ok(urls);
+
+        if (publicFileNames.Count != urls.Count)
+            return StatusCode(500);
+            
+        var uploadResponses = publicFileNames.Select(
+            (t, i) => new MediaUploadResponseModel { FileUploadUrl = urls[i], PublicFileId = t });
+
+        return Ok(uploadResponses);
     }
 
     [HttpGet("buckets")]
