@@ -1,3 +1,5 @@
+using Core.Models;
+
 namespace Infrastructure.EntityFramework.Models;
 
 public class Media
@@ -7,11 +9,10 @@ public class Media
     public string FileName { get; set; }
     public string PublicFileName { get; set; } 
     public long OriginalSize { get; set; }
-    public bool IsDeleted { get; set; }
+    public string Status { get; set; }
+    public int UploadAttempts { get; set; }
     public int DownloadCount { get; set; }
-    public string? Url { get; set; }
     public bool IsPrivate { get; set; }
-    
     public int EventId{ get; set; }
     public Event Event { get; set; }
     public int? GuestId { get; set; }

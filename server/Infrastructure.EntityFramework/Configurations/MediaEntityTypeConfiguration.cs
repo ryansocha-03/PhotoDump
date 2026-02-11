@@ -1,3 +1,4 @@
+using Core.Models;
 using Infrastructure.EntityFramework.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -22,10 +23,10 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
             .IsRequired();
 
         builder
-            .Property(m => m.IsDeleted)
-            .HasDefaultValue(false)
-            .IsRequired();
-        
+            .Property(m => m.Status)
+            .IsRequired()
+            .HasDefaultValue(UploadStatus.Pending);
+
         builder
             .Property(m => m.DownloadCount)
             .HasDefaultValue(0)
