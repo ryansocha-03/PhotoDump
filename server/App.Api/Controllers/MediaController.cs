@@ -21,7 +21,7 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         if (eventInfo is null)
             return NotFound("No event found.");
 
-        List<string> publicFileNames;
+        List<MediaFileNameInfo> publicFileNames;
         try
         {
             publicFileNames = mediaService.GetMediaForEvent(eventInfo.Id, false);

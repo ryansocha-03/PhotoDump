@@ -51,7 +51,7 @@ public class MinioService(
         return urls;
     }
 
-    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<string> fileNames, string eventId, FilePrivacyEnum privacy)
+    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaFileNameInfo> fileNames, string eventId, FilePrivacyEnum privacy)
     {
         List<string> urls = [];
         var privacyString = privacy.ToString().ToLower();
@@ -62,7 +62,12 @@ public class MinioService(
 
         foreach (var fileName in fileNames)
         {
-            args.WithObject($"{eventId}/{privacyString}/{fileName}");
+            args
+                .WithObject($"{eventId}/{privacyString}/{fileName.UrlFileName}")
+                .WithHeaders(new Dictionary<string, string>
+                {
+                    {"Content-Disposition", $"attachment; filename=\"{fileName.DownloadFileName}\""}
+                });
             urls.Add(await _externalS3Client.PresignedGetObjectAsync(args));
         }
         

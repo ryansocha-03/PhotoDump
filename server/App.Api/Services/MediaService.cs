@@ -1,5 +1,6 @@
 using App.Api.Models.Request;
 using ContentStore.MinIO.Utilities;
+using Core.Models;
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 
@@ -14,11 +15,12 @@ public class MediaService(IMediaRepository mediaRepository)
         
         foreach (var media in mediaUploadInfo)
         {
+            // TODO: Better supported file type check
             var fileExtension = GetFileExtension(media.FileName);
             if (!IsValidFileType(fileExtension))
                 return [];
 
-            var publicFileName = $"{GeneratePublicFileName()}{fileExtension}";
+            var publicFileName = GeneratePublicFileName();
             publicFileNames.Add(publicFileName);
             mediaEntities.Add(new Media
             {
@@ -41,10 +43,11 @@ public class MediaService(IMediaRepository mediaRepository)
         return mediaRepository.GetAll(eventId).ToList();
     }
 
-    public List<string> GetMediaForEvent(int eventId,  bool isPrivate)
+    public List<MediaFileNameInfo> GetMediaForEvent(int eventId,  bool isPrivate)
     {
         var mediaData = mediaRepository.GetAll(eventId, isPrivate);
-        return mediaData.Select(m => m.PublicFileName).ToList();
+        return mediaData.Select(media => new MediaFileNameInfo
+            { DownloadFileName = media.FileName, UrlFileName = media.PublicFileName }).ToList();
     }
     
     public async Task<bool> DeleteMedia(int id)
