@@ -17,6 +17,16 @@ services:
       - ./storage/garage.toml:/etc/garage.toml
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
+    restart: always
+
+  broker:
+    image: rabbitmq:4.2.3-alpine
+    volumes:
+      - broker_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${BROKER_USER}
+      RABBITMQ_DEFAULT_PASS: ${BROKER_PASSWORD}
+    restart: always
 
   proxy:
     image: nginx
@@ -33,6 +43,7 @@ services:
     depends_on:
       - app-api
       - garage
+    restart: always
 
   app-api:
     build:
@@ -41,6 +52,7 @@ services:
     depends_on:
       - db
       - garage
+      - broker
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
@@ -58,3 +70,4 @@ volumes:
   postgres_data:
   garage_meta:
   garage_data:
+  broker_data:
