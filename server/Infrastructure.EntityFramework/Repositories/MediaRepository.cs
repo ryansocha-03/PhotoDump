@@ -59,4 +59,14 @@ public class MediaRepository(AppDbContext context) : IMediaRepository
         await context.Media.AddRangeAsync(entities);
         await context.SaveChangesAsync();
     }
+
+    public async Task<int> MediaUploadStateTransition(string publicFileId, int eventId, string currentState,
+        string desiredState)
+    {
+        var rowsAffected = await context.Media
+            .Where(m => m.PublicFileName == publicFileId && m.EventId == eventId && m.Status == currentState)
+            .ExecuteUpdateAsync(m => m.SetProperty(e => e.Status, desiredState));
+        
+        return rowsAffected;
+    }
 }

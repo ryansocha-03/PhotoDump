@@ -49,7 +49,11 @@ public class MediaService(IMediaRepository mediaRepository)
         return mediaData.Select(media => new MediaFileNameInfo
             { DownloadFileName = media.FileName, UrlFileName = media.PublicFileName }).ToList();
     }
-    
+
+    public async Task<int> AcknowledgeUploadStateTransition(string publicFileName, int eventId)
+    {
+        return await mediaRepository.MediaUploadStateTransition(publicFileName, eventId, UploadStatus.Pending, UploadStatus.Uploaded);
+    } 
     public async Task<bool> DeleteMedia(int id)
     {
         return await mediaRepository.DeleteAsync(id);

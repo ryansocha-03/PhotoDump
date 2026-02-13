@@ -107,6 +107,24 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         return Ok(uploadResponses);
     }
 
+    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    [HttpPost("upload/{fileId}/complete")]
+    public async Task<IActionResult> AcknowledgeCompletedUpload([FromRoute] string fileId,
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+    {
+        var eventId = await eventService.FetchLandingDetailsAsync(eventPublicIdHeader);
+        if (eventId is null)
+            return NotFound("No event found.");
+
+        var numUpdated = await mediaService.AcknowledgeUploadStateTransition(fileId, eventId.Id);
+        return numUpdated switch
+        {
+            0 => NotFound("Unable to find file to ack."),
+            1 => Ok(),
+            _ => StatusCode(500)
+        };
+    }
+
     [HttpGet("buckets")]
     public async Task<IActionResult> ListBuckets()
     {

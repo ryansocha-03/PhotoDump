@@ -9,4 +9,6 @@ public interface IMediaRepository : IRepository<Media>
     public IEnumerable<Media> GetAll(int eventId);
     
     public IEnumerable<Media> GetAll(int eventId, bool isPrivate);
+    
+    public Task<int> MediaUploadStateTransition(string publicFileId, int eventId, string currentState, string desiredState); 
 }
