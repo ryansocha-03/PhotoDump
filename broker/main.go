@@ -1,42 +1,28 @@
 package main
 
 import (
-	"context"
 	"log"
-
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func main() {
-	ctx := context.Background()
+	cfg, err := LoadConfig()
+	FailOnError(err, "Issue loading config")
 
-	cfg, cfgErr := LoadConfig()
+	objectStorageClient, err := InitializeObjectStorage(cfg)
+	FailOnError(err, "Issue initializing object storage")
 
-	if cfgErr != nil {
-		log.Fatal(cfgErr.Error())
-	}
+	log.Printf("We did it! %v", objectStorageClient.EndpointURL().Host)
 
-	useSSL := false
+	queueConn, err := InitializeQueueConnection(cfg)
+	FailOnError(err, "Issue creating connection to broker")
+	defer queueConn.Close()
 
-	minioClient, objErr := minio.New(cfg.ContentStoreUrl, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.ContentStoreKey, cfg.ContentStoreSecret, ""),
-		Secure: useSSL,
-	})
+	queueCh, err := InitializeQueueChannel(queueConn)
+	FailOnError(err, "Issue creating broker channel")
+	defer queueCh.Close()
 
-	if objErr != nil {
-		log.Fatalf("Unable to instantiate object storage client: %v", objErr)
-	}
+	queue, err := DeclareQueue(queueCh, cfg.QueueName)
+	FailOnError(err, "Issue declaring queue")
 
-	exists, errExists := minioClient.BucketExists(ctx, cfg.ContentStoreBucket)
-
-	if errExists != nil {
-		log.Println(errExists.Error())
-	}
-
-	if exists {
-		log.Println("We have a bucket")
-	} else {
-		log.Println("No bucket")
-	}
+	log.Println(queue.Name)
 }

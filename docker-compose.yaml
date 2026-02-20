@@ -21,6 +21,8 @@ services:
 
   broker:
     image: rabbitmq:4.2.3-alpine
+    ports:
+      - "5672:5672"
     volumes:
       - broker_data:/var/lib/rabbitmq
     environment:
