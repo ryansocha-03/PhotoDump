@@ -9,7 +9,8 @@ public class BrokerConnectionService(IOptions<BrokerClientConfigurationModel> co
 {
     private readonly ConnectionFactory _connectionFactory = new()
     {
-        Uri = new Uri(configuration.Value.Url),
+        HostName= configuration.Value.Host,
+        Port = configuration.Value.Port,
         UserName = configuration.Value.UserName,
         Password = configuration.Value.Password,
     };

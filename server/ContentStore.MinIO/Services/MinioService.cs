@@ -33,10 +33,9 @@ public class MinioService(
     }
 
     public async Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames,
-        string eventId, FilePrivacyEnum privacy)
+        Guid eventId, FilePrivacyEnum privacy)
     {
         List<string> urls = []; 
-        var privacyString = privacy.ToString().ToLower(); 
 
         var args = new PresignedPutObjectArgs()
             .WithBucket(_contentStoreConfiguration.Bucket)
@@ -44,17 +43,16 @@ public class MinioService(
         
         foreach (var fileName in fileNames)
         {
-            args.WithObject($"{eventId}/{privacyString}/{fileName}");
+            args.WithObject(BuildObjectName(eventId, privacy, fileName));
             urls.Add(await _externalS3Client.PresignedPutObjectAsync(args));
         }
 
         return urls;
     }
-
-    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaFileNameInfo> fileNames, string eventId, FilePrivacyEnum privacy)
+    
+    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaFileNameInfo> fileNames, Guid eventId, FilePrivacyEnum privacy)
     {
         List<string> urls = [];
-        var privacyString = privacy.ToString().ToLower();
         
         var args = new PresignedGetObjectArgs()
             .WithBucket(_contentStoreConfiguration.Bucket)
@@ -63,7 +61,7 @@ public class MinioService(
         foreach (var fileName in fileNames)
         {
             args
-                .WithObject($"{eventId}/{privacyString}/{fileName.UrlFileName}")
+                .WithObject(BuildObjectName(eventId, privacy, fileName.UrlFileName))
                 .WithHeaders(new Dictionary<string, string>
                 {
                     {"Content-Disposition", $"attachment; filename=\"{fileName.DownloadFileName}\""}
@@ -80,7 +78,7 @@ public class MinioService(
         {
             var args = new PresignedGetObjectArgs()
                 .WithBucket(_contentStoreConfiguration.Bucket)
-                .WithObject($"{eventId}/{privacy.ToString().ToLower()}/{fileName}")
+                .WithObject(BuildObjectName(eventId, privacy, fileName))
                 .WithExpiry(_contentStoreConfiguration.PresignedDownloadDurationMinutes * 60);
 
             var url = await _externalS3Client.PresignedGetObjectAsync(args);
@@ -98,7 +96,7 @@ public class MinioService(
         {
             var args = new PresignedPutObjectArgs()
                 .WithBucket(_contentStoreConfiguration.Bucket)
-                .WithObject($"{eventId}/{privacy.ToString().ToLower()}/{fileName}")
+                .WithObject(BuildObjectName(eventId, privacy, fileName))
                 .WithExpiry(_contentStoreConfiguration.PresignedUploadDurationMinutes * 60);
 
             return await _externalS3Client.PresignedPutObjectAsync(args);
@@ -113,7 +111,7 @@ public class MinioService(
     {
         var args = new RemoveObjectArgs()
             .WithBucket(_contentStoreConfiguration.Bucket)
-            .WithObject($"{eventId}/{privacy.ToString().ToLower()}/{fileName}");
+            .WithObject(BuildObjectName(eventId, privacy, fileName));
 
         try
         {
@@ -125,6 +123,11 @@ public class MinioService(
         }
 
         return true;
+    }
+
+    public string BuildObjectName(Guid eventPublicId, FilePrivacyEnum privacy, string fileName)
+    {
+        return $"{eventPublicId}/{privacy.ToString().ToLower()}/{fileName}";
     }
 
     public async Task<List<string>> ListObjectsInBucket(Guid eventId)

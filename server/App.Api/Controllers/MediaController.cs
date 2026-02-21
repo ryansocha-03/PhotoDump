@@ -4,6 +4,7 @@ using App.Api.Services;
 using Core.Interfaces;
 using Core.Models;
 using Identity.Services.Sessions;
+using Infrastructure.EntityFramework.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,7 @@ namespace App.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class MediaController(IContentStoreService contentStoreService, MediaService mediaService, EventService eventService) : ControllerBase
+public class MediaController(IContentStoreService contentStoreService, MediaService mediaService, EventService eventService, IBrokerPublisher publisher) : ControllerBase
 {
     [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("download")]
@@ -41,7 +42,7 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         {
             urls = await contentStoreService.GenerateBulkPresignedDownloadUrls(
                 publicFileNames,
-                eventPublicIdHeader.ToString(),
+                eventPublicIdHeader,
                 FilePrivacyEnum.Public);
         }
         catch (Exception ex)
@@ -89,8 +90,8 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         {
             urls = (await contentStoreService.GenerateBulkPresignedUploadUrls(
                 publicFileNames, 
-                eventPublicIdHeader.ToString(),
-                mediaUploadData.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public)).ToList();;
+                eventPublicIdHeader,
+                mediaUploadData.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public)).ToList();
         }
         catch (Exception ex)
         {
@@ -113,12 +114,30 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
         var numUpdated = await mediaService.AcknowledgeUploadStateTransition(fileId, eventPublicIdHeader);
-        return numUpdated.Count switch
+
+        MediaStateTransitionDto uploadedMedia;
+        switch  (numUpdated.Count)
         {
-            0 => NoContent(),
-            1 => Ok(numUpdated[0].MediaInternalId + " " + numUpdated[0].IsPrivate),
-            _ => StatusCode(500)
-        };
+            case 0:
+                return NoContent();
+            case 1:
+                uploadedMedia = numUpdated[0];
+                break;
+            default:
+                return StatusCode(500);
+        }
+
+        await publisher.PublishAsync("photo-thumbnail", new ProcessMediaThumbnailMessageModel
+        {
+            ObjectName = contentStoreService.BuildObjectName(
+                eventPublicIdHeader, 
+                uploadedMedia.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public,
+                fileId
+            ),
+            MediaId = uploadedMedia.MediaInternalId
+        });
+
+        return Ok();
     }
 
     [HttpGet("buckets")]

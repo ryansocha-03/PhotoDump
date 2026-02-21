@@ -2,8 +2,9 @@ namespace Core.Configuration.ConfigurationModels;
 
 public class BrokerClientConfigurationModel
 {
-    public required string Url { get; set; }
-    public required string UserName { get; set; }
-    public required string Password { get; set; }
-    public required string QueueName { get; set; }
+    public required string Host { get; init; }
+    public required int Port { get; init; }
+    public required string UserName { get; init; }
+    public required string Password { get; init; }
+    public required string QueueName { get; init; }
 }

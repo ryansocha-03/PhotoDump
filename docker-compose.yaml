@@ -65,6 +65,11 @@ services:
       ContentStore__InternalEndpoint: garage:${GARAGE_API_PORT}
       ContentStore__Region: "${GARAGE_REGION}"
       SessionAuth__SessionDurationMinutes: 240 
+      BrokerClient__Host: "broker"
+      BrokerClient__Port: ${BROKER_PORT}
+      BrokerClient__UserName: "${BROKER_USER}"
+      BrokerClient__Password: "${BROKER_PASSWORD}"
+      BrokerClient__QueueName: "photo-thumbnail"
       DOTNET_ENVIRONMENT: "Development"
     restart: always
 
