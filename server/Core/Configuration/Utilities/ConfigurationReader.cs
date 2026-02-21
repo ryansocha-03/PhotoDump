@@ -16,4 +16,9 @@ public static class ConfigurationReader
     {
         services.Configure<ContentStoreConfigurationModel>(configuration.GetSection("ContentStore"));
     }
+
+    public static void AddBrokerClientConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<BrokerClientConfigurationModel>(configuration.GetSection("BrokerClient"));
+    }
 }

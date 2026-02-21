@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add service configurations
 builder.Services.AddDatabaseConfiguration(builder.Configuration);
 builder.Services.AddContentStoreConfiguration(builder.Configuration);
+builder.Services.AddBrokerClientConfiguration(builder.Configuration);
 
 // Register actual services
 builder.Services.AddDatabaseRepositories();
