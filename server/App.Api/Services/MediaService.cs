@@ -50,10 +50,16 @@ public class MediaService(IMediaRepository mediaRepository)
             { DownloadFileName = media.FileName, UrlFileName = media.PublicFileName }).ToList();
     }
 
-    public async Task<int> AcknowledgeUploadStateTransition(string publicFileName, int eventId)
+    public async Task<List<MediaStateTransitionDto>> AcknowledgeUploadStateTransition(string publicFileName, Guid eventPublicId)
     {
-        return await mediaRepository.MediaUploadStateTransition(publicFileName, eventId, UploadStatus.Pending, UploadStatus.Uploaded);
-    } 
+        return await mediaRepository.MediaStateTransitionAsync(publicFileName, eventPublicId, UploadStatus.Pending, UploadStatus.Uploaded);
+    }
+
+    public async Task<Media?> GetMediaByPublicFileName(string publicFileName, int eventId)
+    {
+        return await mediaRepository.GetMediaByPublicFileName(publicFileName, eventId);
+    }
+    
     public async Task<bool> DeleteMedia(int id)
     {
         return await mediaRepository.DeleteAsync(id);
@@ -63,6 +69,8 @@ public class MediaService(IMediaRepository mediaRepository)
     {
         return await mediaRepository.GetAsync(mediaId);
     }
+    
+    
 
     private static string GetFileExtension(string fileName)
     {
