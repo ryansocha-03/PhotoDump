@@ -1,6 +1,13 @@
 package main
 
-import "github.com/rabbitmq/amqp091-go"
+import (
+	"context"
+	"fmt"
+	"log"
+	"sync"
+
+	"github.com/rabbitmq/amqp091-go"
+)
 
 func InitializeQueueConnection(cfg *Config) (conn *amqp091.Connection, err error) {
 	conn, err = amqp091.Dial(cfg.QueueConnection)
@@ -23,4 +30,48 @@ func DeclareQueue(ch *amqp091.Channel, qName string) (q *amqp091.Queue, err erro
 	)
 
 	return &queueObj, err
+}
+
+func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config) error {
+	msgs, err := ch.Consume(cfg.QueueName, "", true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+
+	var waitGroup sync.WaitGroup
+
+	log.Printf("Max workers: %v", cfg.MaxWorkers)
+
+	sem := make(chan struct{}, cfg.MaxWorkers)
+
+	log.Println("Waiting for messages. Press Ctrl + C to exit...")
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Shutdown signal received. Waiting for in-flight jobs to finish...")
+			waitGroup.Wait()
+			return nil
+		case msg, ok := <-msgs:
+			if !ok {
+				return fmt.Errorf("Message channel was closed.") // TODO: "gracefully" handle message channel closure
+			}
+
+			log.Println("Processing message")
+
+			waitGroup.Add(1)
+
+			go func(mes *amqp091.Delivery) {
+				sem <- struct{}{}
+				defer func() {
+					<-sem
+					waitGroup.Done()
+				}()
+				err = ProcessMessage(mes)
+				if err != nil {
+					log.Printf("Error processing message: %v\n", err.Error())
+				}
+			}(&msg)
+		}
+	}
 }

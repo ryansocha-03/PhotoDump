@@ -13,6 +13,7 @@ type Config struct {
 	ContentStoreBucket string `mapstructure:"content_store_bucket"`
 	QueueConnection    string `mapstructure:"queue_connection_string"`
 	QueueName          string `mapstructure:"queue_name"`
+	MaxWorkers         int    `mapstructure:"max_workers"`
 }
 
 func LoadConfig() (c *Config, err error) {
@@ -24,6 +25,7 @@ func LoadConfig() (c *Config, err error) {
 	viper.BindEnv("content_store_bucket")
 	viper.BindEnv("queue_connection_string")
 	viper.BindEnv("queue_name")
+	viper.BindEnv("max_workers")
 
 	err = viper.Unmarshal(&c)
 	if err != nil {
