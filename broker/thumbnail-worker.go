@@ -13,10 +13,11 @@ type ThumbnailGenerationMessage struct {
 	MediaId    int    `json:"MediaId"`
 }
 
-func ProcessMessage(msg *amqp091.Delivery) (err error) {
+func ProcessMessage(msg *amqp091.Delivery) (err *MessageError) {
 	var msgData ThumbnailGenerationMessage
-	err = json.Unmarshal(msg.Body, &msgData)
-	if err != nil {
+	umErr := json.Unmarshal(msg.Body, &msgData)
+	if umErr != nil {
+		err = &MessageError{Message: umErr.Error(), Requeue: false}
 		return
 	}
 	log.Println("About to go to sleep...")

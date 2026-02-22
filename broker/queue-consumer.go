@@ -14,8 +14,9 @@ func InitializeQueueConnection(cfg *Config) (conn *amqp091.Connection, err error
 	return
 }
 
-func InitializeQueueChannel(conn *amqp091.Connection) (ch *amqp091.Channel, err error) {
+func InitializeQueueChannel(conn *amqp091.Connection, cfg *Config) (ch *amqp091.Channel, err error) {
 	ch, err = conn.Channel()
+	ch.Qos(cfg.MaxMessages, 0, true)
 	return
 }
 
@@ -33,7 +34,7 @@ func DeclareQueue(ch *amqp091.Channel, qName string) (q *amqp091.Queue, err erro
 }
 
 func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config) error {
-	msgs, err := ch.Consume(cfg.QueueName, "", true, false, false, false, nil)
+	msgs, err := ch.Consume(cfg.QueueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
 	}
@@ -67,10 +68,15 @@ func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config) error {
 					<-sem
 					waitGroup.Done()
 				}()
-				err = ProcessMessage(mes)
-				if err != nil {
+
+				msgErr := ProcessMessage(mes)
+				if msgErr != nil {
 					log.Printf("Error processing message: %v\n", err.Error())
+					msg.Nack(false, msgErr.Requeue)
+					return
 				}
+
+				msg.Ack(false)
 			}(&msg)
 		}
 	}

@@ -21,7 +21,7 @@ func main() {
 	FailOnError(err, "Issue creating connection to broker")
 	defer queueConn.Close()
 
-	queueCh, err := InitializeQueueChannel(queueConn)
+	queueCh, err := InitializeQueueChannel(queueConn, cfg)
 	FailOnError(err, "Issue creating broker channel")
 	defer queueCh.Close()
 
