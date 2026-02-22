@@ -23,6 +23,7 @@ public class BrokerService(IBrokerConnection connection): IBrokerPublisher
             exchange: string.Empty,
             routingKey:  routingKey,
             mandatory: true,
+            basicProperties: new BasicProperties{ Persistent = true },
             body: Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message))
         );
     }
