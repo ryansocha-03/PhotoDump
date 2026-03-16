@@ -91,3 +91,4 @@ docs/*.tmp
 # S3 Storage Files
 # ========================
 storage/garage.toml
+.gocache

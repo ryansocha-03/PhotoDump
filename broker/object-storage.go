@@ -10,11 +10,10 @@ import (
 
 func InitializeObjectStorage(cfg *Config) (client *minio.Client, err error) {
 	ctx := context.Background()
-	useSSL := false
 
 	client, err = minio.New(cfg.ContentStoreUrl, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.ContentStoreKey, cfg.ContentStoreSecret, ""),
-		Secure: useSSL,
+		Secure: cfg.ContentStoreSecure,
 	})
 
 	if err != nil {

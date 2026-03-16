@@ -10,6 +10,8 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
+type messageProcessor func(*amqp091.Delivery, *minio.Client) *MessageError
+
 func InitializeQueueConnection(cfg *Config) (conn *amqp091.Connection, err error) {
 	conn, err = amqp091.Dial(cfg.QueueConnection)
 	return
@@ -17,7 +19,15 @@ func InitializeQueueConnection(cfg *Config) (conn *amqp091.Connection, err error
 
 func InitializeQueueChannel(conn *amqp091.Connection, cfg *Config) (ch *amqp091.Channel, err error) {
 	ch, err = conn.Channel()
-	ch.Qos(cfg.MaxMessages, 0, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = ch.Qos(cfg.MaxMessages, 0, true); err != nil {
+		_ = ch.Close()
+		return nil, err
+	}
+
 	return
 }
 
@@ -40,6 +50,10 @@ func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *
 		return err
 	}
 
+	return consumeMessages(ctx, msgs, cfg, objstr, ProcessMessage)
+}
+
+func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *Config, objstr *minio.Client, processor messageProcessor) error {
 	var waitGroup sync.WaitGroup
 
 	log.Printf("Max workers: %v", cfg.MaxWorkers)
@@ -56,29 +70,35 @@ func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *
 			return nil
 		case msg, ok := <-msgs:
 			if !ok {
-				return fmt.Errorf("Message channel was closed.") // TODO: "gracefully" handle message channel closure
+				log.Println("Message channel closed. Waiting for in-flight jobs to finish...")
+				waitGroup.Wait()
+				return fmt.Errorf("message channel was closed")
 			}
 
 			log.Println("Processing message")
 
 			waitGroup.Add(1)
 
-			go func(mes *amqp091.Delivery) {
+			go func(mes amqp091.Delivery) {
 				sem <- struct{}{}
 				defer func() {
 					<-sem
 					waitGroup.Done()
 				}()
 
-				msgErr := ProcessMessage(mes, objstr)
+				msgErr := processor(&mes, objstr)
 				if msgErr != nil {
 					log.Printf("Error processing message: %v\n", msgErr.Error())
-					msg.Nack(false, msgErr.Requeue)
+					if nackErr := mes.Nack(false, msgErr.Requeue); nackErr != nil {
+						log.Printf("Issue nacking message: %v\n", nackErr)
+					}
 					return
 				}
 
-				mes.Ack(false)
-			}(&msg)
+				if ackErr := mes.Ack(false); ackErr != nil {
+					log.Printf("Issue acking message: %v\n", ackErr)
+				}
+			}(msg)
 		}
 	}
 }
