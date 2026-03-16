@@ -15,7 +15,7 @@ func main() {
 	objectStorageClient, err := InitializeObjectStorage(cfg)
 	FailOnError(err, "Issue initializing object storage")
 
-	log.Printf("Connected to object storage at: %v", objectStorageClient.EndpointURL().Host)
+	log.Printf("Connected to object storage at: %v", cfg.ContentStoreUrl)
 
 	queueConn, err := InitializeQueueConnection(cfg)
 	FailOnError(err, "Issue creating connection to broker")

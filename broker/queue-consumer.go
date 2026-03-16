@@ -6,11 +6,10 @@ import (
 	"log"
 	"sync"
 
-	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 )
 
-type messageProcessor func(*amqp091.Delivery, *minio.Client) *MessageError
+type messageProcessor func(*amqp091.Delivery, *ObjectStorage) *MessageError
 
 func InitializeQueueConnection(cfg *Config) (conn *amqp091.Connection, err error) {
 	conn, err = amqp091.Dial(cfg.QueueConnection)
@@ -44,7 +43,7 @@ func DeclareQueue(ch *amqp091.Channel, qName string) (q *amqp091.Queue, err erro
 	return &queueObj, err
 }
 
-func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *minio.Client) error {
+func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *ObjectStorage) error {
 	msgs, err := ch.Consume(cfg.QueueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -53,7 +52,7 @@ func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *
 	return consumeMessages(ctx, msgs, cfg, objstr, ProcessMessage)
 }
 
-func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *Config, objstr *minio.Client, processor messageProcessor) error {
+func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *Config, objstr *ObjectStorage, processor messageProcessor) error {
 	var waitGroup sync.WaitGroup
 
 	log.Printf("Max workers: %v", cfg.MaxWorkers)

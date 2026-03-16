@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -22,7 +21,7 @@ func TestConsumeMessagesAcksProcessedMessages(t *testing.T) {
 	}
 	close(msgs)
 
-	err := consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *minio.Client) *MessageError {
+	err := consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *ObjectStorage) *MessageError {
 		return nil
 	})
 	if err == nil || !strings.Contains(err.Error(), "message channel was closed") {
@@ -49,7 +48,7 @@ func TestConsumeMessagesNacksFailedMessages(t *testing.T) {
 	}
 	close(msgs)
 
-	err := consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *minio.Client) *MessageError {
+	err := consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *ObjectStorage) *MessageError {
 		return &MessageError{Message: "boom", Requeue: true}
 	})
 	if err == nil || !strings.Contains(err.Error(), "message channel was closed") {
@@ -84,7 +83,7 @@ func TestConsumeMessagesWaitsForInflightWorkersWhenChannelCloses(t *testing.T) {
 	close(msgs)
 
 	go func() {
-		done <- consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *minio.Client) *MessageError {
+		done <- consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *ObjectStorage) *MessageError {
 			close(started)
 			<-release
 			return nil
