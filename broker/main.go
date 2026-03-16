@@ -12,6 +12,9 @@ func main() {
 	cfg, err := LoadConfig()
 	FailOnError(err, "Issue loading config")
 
+	err = InitializeImageProcessing()
+	FailOnError(err, "Issue initializing image processing")
+
 	objectStorageClient, err := InitializeObjectStorage(cfg)
 	FailOnError(err, "Issue initializing object storage")
 
