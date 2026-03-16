@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -13,7 +14,7 @@ type ThumbnailGenerationMessage struct {
 	MediaId    int    `json:"MediaId"`
 }
 
-func ProcessMessage(msg *amqp091.Delivery) (err *MessageError) {
+func ProcessMessage(msg *amqp091.Delivery, objstr *minio.Client) (err *MessageError) {
 	var msgData ThumbnailGenerationMessage
 	umErr := json.Unmarshal(msg.Body, &msgData)
 	if umErr != nil {

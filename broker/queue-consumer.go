@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -33,7 +34,7 @@ func DeclareQueue(ch *amqp091.Channel, qName string) (q *amqp091.Queue, err erro
 	return &queueObj, err
 }
 
-func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config) error {
+func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *minio.Client) error {
 	msgs, err := ch.Consume(cfg.QueueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -69,14 +70,14 @@ func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config) error {
 					waitGroup.Done()
 				}()
 
-				msgErr := ProcessMessage(mes)
+				msgErr := ProcessMessage(mes, objstr)
 				if msgErr != nil {
-					log.Printf("Error processing message: %v\n", err.Error())
+					log.Printf("Error processing message: %v\n", msgErr.Error())
 					msg.Nack(false, msgErr.Requeue)
 					return
 				}
 
-				msg.Ack(false)
+				mes.Ack(false)
 			}(&msg)
 		}
 	}

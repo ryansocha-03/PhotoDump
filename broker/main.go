@@ -33,7 +33,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err = RunConsumer(ctx, queueCh, cfg); err != nil {
+	if err = RunConsumer(ctx, queueCh, cfg, objectStorageClient); err != nil {
 		FailOnError(err, "Consumer issue. Details: ")
 	}
 }
