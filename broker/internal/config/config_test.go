@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"strings"
@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func TestLoadConfigFailsWhenRequiredEnvMissing(t *testing.T) {
-	cfg, err := loadConfig(newTestConfigViper(map[string]any{
+func TestLoadFailsWhenRequiredEnvMissing(t *testing.T) {
+	cfg, err := loadFromViper(newTestViper(map[string]any{
 		"max_workers": nil,
 	}))
 	if err == nil {
@@ -20,7 +20,7 @@ func TestLoadConfigFailsWhenRequiredEnvMissing(t *testing.T) {
 	}
 }
 
-func TestLoadConfigFailsWhenConcurrencySettingsAreNotPositive(t *testing.T) {
+func TestLoadFailsWhenConcurrencySettingsAreNotPositive(t *testing.T) {
 	testCases := []struct {
 		name      string
 		overrides map[string]any
@@ -44,7 +44,7 @@ func TestLoadConfigFailsWhenConcurrencySettingsAreNotPositive(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, err := loadConfig(newTestConfigViper(tc.overrides))
+			cfg, err := loadFromViper(newTestViper(tc.overrides))
 			if err == nil {
 				t.Fatalf("expected concurrency validation error, got config: %+v", cfg)
 			}
@@ -56,8 +56,8 @@ func TestLoadConfigFailsWhenConcurrencySettingsAreNotPositive(t *testing.T) {
 	}
 }
 
-func TestLoadConfigReadsExplicitSettings(t *testing.T) {
-	cfg, err := loadConfig(newTestConfigViper(map[string]any{
+func TestLoadReadsExplicitSettings(t *testing.T) {
+	cfg, err := loadFromViper(newTestViper(map[string]any{
 		"content_store_secure": true,
 		"max_workers":          4,
 		"max_messages":         8,
@@ -79,7 +79,7 @@ func TestLoadConfigReadsExplicitSettings(t *testing.T) {
 	}
 }
 
-func newTestConfigViper(overrides map[string]any) *viper.Viper {
+func newTestViper(overrides map[string]any) *viper.Viper {
 	v := viper.New()
 
 	values := map[string]any{

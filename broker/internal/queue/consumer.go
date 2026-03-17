@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	"context"
@@ -6,17 +6,22 @@ import (
 	"log"
 	"sync"
 
+	"photodump/workers/internal/config"
+	"photodump/workers/internal/pipeline"
+
 	"github.com/rabbitmq/amqp091-go"
 )
 
-type messageProcessor func(*amqp091.Delivery, *ObjectStorage) *MessageError
+type messageProcessor interface {
+	ProcessMessage(ctx context.Context, body []byte) *pipeline.ProcessingError
+}
 
-func InitializeQueueConnection(cfg *Config) (conn *amqp091.Connection, err error) {
+func InitializeConnection(cfg *config.Config) (conn *amqp091.Connection, err error) {
 	conn, err = amqp091.Dial(cfg.QueueConnection)
 	return
 }
 
-func InitializeQueueChannel(conn *amqp091.Connection, cfg *Config) (ch *amqp091.Channel, err error) {
+func InitializeChannel(conn *amqp091.Connection, cfg *config.Config) (ch *amqp091.Channel, err error) {
 	ch, err = conn.Channel()
 	if err != nil {
 		return nil, err
@@ -30,29 +35,32 @@ func InitializeQueueChannel(conn *amqp091.Connection, cfg *Config) (ch *amqp091.
 	return
 }
 
-func DeclareQueue(ch *amqp091.Channel, qName string) (q *amqp091.Queue, err error) {
+func DeclareQueue(ch *amqp091.Channel, queueName string) (*amqp091.Queue, error) {
 	queueObj, err := ch.QueueDeclare(
-		qName,
+		queueName,
 		true,
 		false,
 		false,
 		false,
 		nil,
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return &queueObj, err
+	return &queueObj, nil
 }
 
-func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *Config, objstr *ObjectStorage) error {
+func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *config.Config, processor messageProcessor) error {
 	msgs, err := ch.Consume(cfg.QueueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
 	}
 
-	return consumeMessages(ctx, msgs, cfg, objstr, ProcessMessage)
+	return consumeMessages(ctx, msgs, cfg, processor)
 }
 
-func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *Config, objstr *ObjectStorage, processor messageProcessor) error {
+func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *config.Config, processor messageProcessor) error {
 	var waitGroup sync.WaitGroup
 
 	log.Printf("Max workers: %v", cfg.MaxWorkers)
@@ -75,26 +83,25 @@ func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *Con
 			}
 
 			log.Println("Processing message")
-
 			waitGroup.Add(1)
 
-			go func(mes amqp091.Delivery) {
+			go func(delivery amqp091.Delivery) {
 				sem <- struct{}{}
 				defer func() {
 					<-sem
 					waitGroup.Done()
 				}()
 
-				msgErr := processor(&mes, objstr)
+				msgErr := processor.ProcessMessage(context.WithoutCancel(ctx), delivery.Body)
 				if msgErr != nil {
 					log.Printf("Error processing message: %v\n", msgErr.Error())
-					if nackErr := mes.Nack(false, msgErr.Requeue); nackErr != nil {
+					if nackErr := delivery.Nack(false, msgErr.Requeue); nackErr != nil {
 						log.Printf("Issue nacking message: %v\n", nackErr)
 					}
 					return
 				}
 
-				if ackErr := mes.Ack(false); ackErr != nil {
+				if ackErr := delivery.Ack(false); ackErr != nil {
 					log.Printf("Issue acking message: %v\n", ackErr)
 				}
 			}(msg)

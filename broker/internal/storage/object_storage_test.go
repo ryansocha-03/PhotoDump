@@ -1,24 +1,25 @@
-package main
+package storage
 
 import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 
 	"github.com/minio/minio-go/v7"
 )
 
-func TestGetOriginalObjectDownloadsBytes(t *testing.T) {
+func TestGetObjectDownloadsBytes(t *testing.T) {
 	object := newFakeObject([]byte("image-bytes"), nil, nil)
 	client := &fakeObjectClient{object: object}
-	storage := &ObjectStorage{
+	store := &Store{
 		client: client,
 		bucket: "photos",
 	}
 
-	data, err := storage.GetOriginalObject(context.Background(), "folder/original.png")
+	data, err := store.GetObject(context.Background(), "folder/original.png")
 	if err != nil {
 		t.Fatalf("expected object download to succeed, got %v", err)
 	}
@@ -40,24 +41,20 @@ func TestGetOriginalObjectDownloadsBytes(t *testing.T) {
 	}
 }
 
-func TestGetOriginalObjectReturnsNonRequeueWhenObjectIsMissing(t *testing.T) {
+func TestGetObjectReturnsObjectNotFoundWhenMissing(t *testing.T) {
 	object := newFakeObject(nil, minio.ErrorResponse{Code: "NoSuchKey"}, nil)
-	storage := &ObjectStorage{
+	store := &Store{
 		client: &fakeObjectClient{object: object},
 		bucket: "photos",
 	}
 
-	data, err := storage.GetOriginalObject(context.Background(), "folder/missing.png")
+	data, err := store.GetObject(context.Background(), "folder/missing.png")
 	if err == nil {
 		t.Fatalf("expected missing object error, got data %q", string(data))
 	}
 
-	if err.Requeue {
-		t.Fatal("expected missing object error to avoid requeue")
-	}
-
-	if !strings.Contains(err.Message, "not found") {
-		t.Fatalf("expected missing object message, got %q", err.Message)
+	if !IsObjectNotFound(err) {
+		t.Fatalf("expected object not found error, got %v", err)
 	}
 
 	if !object.closed {
@@ -65,24 +62,20 @@ func TestGetOriginalObjectReturnsNonRequeueWhenObjectIsMissing(t *testing.T) {
 	}
 }
 
-func TestGetOriginalObjectReturnsRequeueOnReadFailure(t *testing.T) {
+func TestGetObjectReturnsReadFailure(t *testing.T) {
 	object := newFakeObject(nil, nil, errors.New("read failed"))
-	storage := &ObjectStorage{
+	store := &Store{
 		client: &fakeObjectClient{object: object},
 		bucket: "photos",
 	}
 
-	data, err := storage.GetOriginalObject(context.Background(), "folder/original.png")
+	data, err := store.GetObject(context.Background(), "folder/original.png")
 	if err == nil {
 		t.Fatalf("expected read error, got data %q", string(data))
 	}
 
-	if !err.Requeue {
-		t.Fatal("expected read failure to requeue")
-	}
-
-	if !strings.Contains(err.Message, "unable to read original object") {
-		t.Fatalf("expected read failure message, got %q", err.Message)
+	if !strings.Contains(err.Error(), "unable to read object") {
+		t.Fatalf("expected read failure message, got %q", err.Error())
 	}
 
 	if !object.closed {
@@ -90,11 +83,44 @@ func TestGetOriginalObjectReturnsRequeueOnReadFailure(t *testing.T) {
 	}
 }
 
+func TestPutObjectUploadsBytesWithContentType(t *testing.T) {
+	client := &fakeObjectClient{}
+	store := &Store{
+		client: client,
+		bucket: "photos",
+	}
+
+	err := store.PutObject(context.Background(), "folder/variants/gallery.jpg", []byte("thumb"), "image/jpeg")
+	if err != nil {
+		t.Fatalf("expected object upload to succeed, got %v", err)
+	}
+
+	if client.putBucketName != "photos" {
+		t.Fatalf("expected upload bucket name to be photos, got %q", client.putBucketName)
+	}
+
+	if client.putObjectName != "folder/variants/gallery.jpg" {
+		t.Fatalf("expected upload object name to be passed through, got %q", client.putObjectName)
+	}
+
+	if client.putContentType != "image/jpeg" {
+		t.Fatalf("expected upload content type image/jpeg, got %q", client.putContentType)
+	}
+
+	if string(client.putData) != "thumb" {
+		t.Fatalf("expected uploaded data to match, got %q", string(client.putData))
+	}
+}
+
 type fakeObjectClient struct {
-	object     objectReader
-	err        error
-	bucketName string
-	objectName string
+	object         objectReader
+	err            error
+	bucketName     string
+	objectName     string
+	putBucketName  string
+	putObjectName  string
+	putContentType string
+	putData        []byte
 }
 
 func (c *fakeObjectClient) GetObject(_ context.Context, bucketName, objectName string, _ minio.GetObjectOptions) (objectReader, error) {
@@ -106,6 +132,20 @@ func (c *fakeObjectClient) GetObject(_ context.Context, bucketName, objectName s
 	}
 
 	return c.object, nil
+}
+
+func (c *fakeObjectClient) PutObject(_ context.Context, bucketName, objectName string, reader io.Reader, _ int64, opts minio.PutObjectOptions) (minio.UploadInfo, error) {
+	c.putBucketName = bucketName
+	c.putObjectName = objectName
+	c.putContentType = opts.ContentType
+
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return minio.UploadInfo{}, err
+	}
+	c.putData = data
+
+	return minio.UploadInfo{}, nil
 }
 
 type fakeObject struct {

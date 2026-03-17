@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	"context"
@@ -6,6 +6,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"photodump/workers/internal/config"
+	"photodump/workers/internal/pipeline"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -21,9 +24,11 @@ func TestConsumeMessagesAcksProcessedMessages(t *testing.T) {
 	}
 	close(msgs)
 
-	err := consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *ObjectStorage) *MessageError {
+	processor := &stubProcessor{fn: func(_ context.Context, _ []byte) *pipeline.ProcessingError {
 		return nil
-	})
+	}}
+
+	err := consumeMessages(context.Background(), msgs, &config.Config{MaxWorkers: 1}, processor)
 	if err == nil || !strings.Contains(err.Error(), "message channel was closed") {
 		t.Fatalf("expected closed channel error, got %v", err)
 	}
@@ -48,9 +53,11 @@ func TestConsumeMessagesNacksFailedMessages(t *testing.T) {
 	}
 	close(msgs)
 
-	err := consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *ObjectStorage) *MessageError {
-		return &MessageError{Message: "boom", Requeue: true}
-	})
+	processor := &stubProcessor{fn: func(_ context.Context, _ []byte) *pipeline.ProcessingError {
+		return &pipeline.ProcessingError{Message: "boom", Requeue: true}
+	}}
+
+	err := consumeMessages(context.Background(), msgs, &config.Config{MaxWorkers: 1}, processor)
 	if err == nil || !strings.Contains(err.Error(), "message channel was closed") {
 		t.Fatalf("expected closed channel error, got %v", err)
 	}
@@ -82,12 +89,14 @@ func TestConsumeMessagesWaitsForInflightWorkersWhenChannelCloses(t *testing.T) {
 	}
 	close(msgs)
 
+	processor := &stubProcessor{fn: func(_ context.Context, _ []byte) *pipeline.ProcessingError {
+		close(started)
+		<-release
+		return nil
+	}}
+
 	go func() {
-		done <- consumeMessages(context.Background(), msgs, &Config{MaxWorkers: 1}, nil, func(_ *amqp091.Delivery, _ *ObjectStorage) *MessageError {
-			close(started)
-			<-release
-			return nil
-		})
+		done <- consumeMessages(context.Background(), msgs, &config.Config{MaxWorkers: 1}, processor)
 	}()
 
 	<-started
@@ -108,6 +117,14 @@ func TestConsumeMessagesWaitsForInflightWorkersWhenChannelCloses(t *testing.T) {
 	if got := recorder.ackCount(); got != 1 {
 		t.Fatalf("expected 1 ack after worker completion, got %d", got)
 	}
+}
+
+type stubProcessor struct {
+	fn func(ctx context.Context, body []byte) *pipeline.ProcessingError
+}
+
+func (p *stubProcessor) ProcessMessage(ctx context.Context, body []byte) *pipeline.ProcessingError {
+	return p.fn(ctx, body)
 }
 
 type ackRecorder struct {

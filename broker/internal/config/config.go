@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	ContentStoreUrl    string `mapstructure:"content_store_domain"`
+	ContentStoreURL    string `mapstructure:"content_store_domain"`
 	ContentStoreKey    string `mapstructure:"content_store_key"`
 	ContentStoreSecret string `mapstructure:"content_store_secret"`
 	ContentStoreBucket string `mapstructure:"content_store_bucket"`
@@ -20,50 +20,50 @@ type Config struct {
 	MaxMessages        int    `mapstructure:"max_messages"`
 }
 
-func LoadConfig() (c *Config, err error) {
+func Load() (*Config, error) {
 	v := viper.New()
 	v.SetEnvPrefix("pd")
 
-	for _, key := range requiredConfigKeys() {
-		if err = v.BindEnv(key); err != nil {
+	for _, key := range requiredKeys() {
+		if err := v.BindEnv(key); err != nil {
 			return nil, fmt.Errorf("unable to bind environment variable %s: %w", envName(key), err)
 		}
 	}
 
-	return loadConfig(v)
+	return loadFromViper(v)
 }
 
-func loadConfig(v *viper.Viper) (*Config, error) {
-	missing := missingEnvKeys(v, requiredConfigKeys())
+func loadFromViper(v *viper.Viper) (*Config, error) {
+	missing := missingKeys(v, requiredKeys())
 	if len(missing) > 0 {
 		return nil, fmt.Errorf("missing required environment variables: %s", strings.Join(missing, ", "))
 	}
 
-	c := &Config{}
-	if err := v.Unmarshal(c); err != nil {
+	cfg := &Config{}
+	if err := v.Unmarshal(cfg); err != nil {
 		return nil, err
 	}
 
-	if c.ContentStoreUrl == "" || c.ContentStoreKey == "" || c.ContentStoreSecret == "" || c.ContentStoreBucket == "" {
+	if cfg.ContentStoreURL == "" || cfg.ContentStoreKey == "" || cfg.ContentStoreSecret == "" || cfg.ContentStoreBucket == "" {
 		return nil, errors.New("unable to read content store configuration")
 	}
 
-	if c.QueueConnection == "" || c.QueueName == "" {
+	if cfg.QueueConnection == "" || cfg.QueueName == "" {
 		return nil, errors.New("unable to read queue configuration")
 	}
 
-	if c.MaxWorkers <= 0 {
+	if cfg.MaxWorkers <= 0 {
 		return nil, errors.New("max_workers must be greater than zero")
 	}
 
-	if c.MaxMessages <= 0 {
+	if cfg.MaxMessages <= 0 {
 		return nil, errors.New("max_messages must be greater than zero")
 	}
 
-	return c, nil
+	return cfg, nil
 }
 
-func requiredConfigKeys() []string {
+func requiredKeys() []string {
 	return []string{
 		"content_store_domain",
 		"content_store_key",
@@ -77,7 +77,7 @@ func requiredConfigKeys() []string {
 	}
 }
 
-func missingEnvKeys(v *viper.Viper, keys []string) []string {
+func missingKeys(v *viper.Viper, keys []string) []string {
 	missing := make([]string, 0)
 
 	for _, key := range keys {
