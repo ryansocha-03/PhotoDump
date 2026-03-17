@@ -12,10 +12,6 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
-type messageProcessor interface {
-	ProcessMessage(ctx context.Context, body []byte) *pipeline.ProcessingError
-}
-
 func InitializeConnection(cfg *config.Config) (conn *amqp091.Connection, err error) {
 	conn, err = amqp091.Dial(cfg.QueueConnection)
 	return
@@ -51,7 +47,7 @@ func DeclareQueue(ch *amqp091.Channel, queueName string) (*amqp091.Queue, error)
 	return &queueObj, nil
 }
 
-func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *config.Config, processor messageProcessor) error {
+func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *config.Config, processor pipeline.Processor) error {
 	msgs, err := ch.Consume(cfg.QueueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -60,7 +56,7 @@ func RunConsumer(ctx context.Context, ch *amqp091.Channel, cfg *config.Config, p
 	return consumeMessages(ctx, msgs, cfg, processor)
 }
 
-func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *config.Config, processor messageProcessor) error {
+func consumeMessages(ctx context.Context, msgs <-chan amqp091.Delivery, cfg *config.Config, processor pipeline.Processor) error {
 	var waitGroup sync.WaitGroup
 
 	log.Printf("Max workers: %v", cfg.MaxWorkers)
