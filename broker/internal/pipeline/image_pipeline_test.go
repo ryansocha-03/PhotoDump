@@ -79,7 +79,7 @@ func TestProcessMessageUploadsGeneratedVariants(t *testing.T) {
 		t.Fatalf("expected 1 uploaded variant, got %d", got)
 	}
 
-	if store.putCalls[0].objectName != "abc/public/variants/photo_gallery.jpg" {
+	if store.putCalls[0].objectName != "abc/public/photo_gallery.jpg" {
 		t.Fatalf("unexpected variant object name %q", store.putCalls[0].objectName)
 	}
 
@@ -93,6 +93,20 @@ func TestProcessMessageUploadsGeneratedVariants(t *testing.T) {
 
 	if len(generator.receivedSpecs) != 1 || generator.receivedSpecs[0].Name != "gallery" {
 		t.Fatalf("expected generator to receive default gallery spec, got %+v", generator.receivedSpecs)
+	}
+}
+
+func TestVariantObjectNamePreservesThreePartObjectPath(t *testing.T) {
+	variantObjectName := VariantObjectName(
+		"4ccdf5c0-5648-4ebd-a2b7-63b75abcddd6/public/8bef58d7944a467aa64d6be902b4e177.png",
+		mediaimage.GeneratedVariant{
+			Name:      "gallery",
+			Extension: "jpg",
+		},
+	)
+
+	if variantObjectName != "4ccdf5c0-5648-4ebd-a2b7-63b75abcddd6/public/8bef58d7944a467aa64d6be902b4e177_gallery.jpg" {
+		t.Fatalf("unexpected variant object name %q", variantObjectName)
 	}
 }
 
