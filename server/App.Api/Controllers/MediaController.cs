@@ -19,14 +19,14 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
     public async Task<IActionResult> GetEventPublicMediaDownload(
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
-        var eventInfo = await eventService.FetchLandingDetailsAsync(eventPublicIdHeader);
-        if (eventInfo is null)
+        var eventId = await eventService.GetEventIdByPublicId(eventPublicIdHeader);
+        if (eventId is not { } resolvedEventId)
             return NotFound("No event found.");
 
         List<MediaFileNameInfo> publicFileNames;
         try
         {
-            publicFileNames = mediaService.GetMediaForEvent(eventInfo.Id, false);
+            publicFileNames = mediaService.GetMediaForEvent(resolvedEventId, false);
         }
         catch (Exception ex)
         {
@@ -63,8 +63,8 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         if (mediaUploadData.MediaUploadInfo.Count == 0)
             return BadRequest("No uploads? Alright idiot.");
 
-        var eventData = await eventService.FetchLandingDetailsAsync(eventPublicIdHeader);
-        if  (eventData is null)
+        var eventId = await eventService.GetEventIdByPublicId(eventPublicIdHeader);
+        if  (eventId is not { } resolvedEventId)
             return NotFound("No event found.");
         
         // write files to database
@@ -72,7 +72,7 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
         try
         {
             publicFileNames = await mediaService.UploadMedia(mediaUploadData.MediaUploadInfo,
-                eventData.Id,
+                resolvedEventId,
                 mediaUploadData.IsPrivate);
         }
         catch (Exception ex)

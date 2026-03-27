@@ -25,7 +25,15 @@ public class EventRepository(AppDbContext context): IEventRepository
             .Take(20)
             .ToListAsync();
     }
-    
+
+    public async Task<int?> GetEventIdByPublicIdAsync(Guid publicId)
+    {
+        return await context.Events
+            .Where(e => e.PublicId == publicId)
+            .Select(e => (int?)e.Id)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<Event?> GetAsync(int id)
     {
         return await context.Events.FindAsync(id);

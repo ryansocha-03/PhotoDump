@@ -6,6 +6,11 @@ namespace App.Api.Services;
 
 public class EventService(IEventRepository eventRepository)
 {
+    public async Task<int?> GetEventIdByPublicId(Guid eventPublicId)
+    {
+        return await eventRepository.GetEventIdByPublicIdAsync(eventPublicId);
+    }
+    
     public async Task<EventLandingResponseModel?> FetchLandingDetailsAsync(Guid eventPublicId)
     {
         var eventData = await eventRepository.GetByPublicIdAsync(eventPublicId);

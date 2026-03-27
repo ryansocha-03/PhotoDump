@@ -9,4 +9,6 @@ public interface IEventRepository : IRepository<Event>
    Task<IEnumerable<Guest>> GetGuestListForEventAsync(int  eventId);
    
    Task<IEnumerable<Guest>> GuestListSearchAsync(int eventId, string search);
+   
+   Task<int?> GetEventIdByPublicIdAsync(Guid publicId);
 }
