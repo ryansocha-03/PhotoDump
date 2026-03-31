@@ -1,5 +1,8 @@
+using Core.DTOs;
+using Core.Models;
 using Infrastructure.EntityFramework.Contexts;
 using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Models.DTOs;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -81,5 +84,16 @@ public class MediaRepository(AppDbContext context) : IMediaRepository
     public async Task<Media?> GetMediaByPublicFileName(string publicFileName, int eventId)
     {
         return await context.Media.Where(m => m.PublicFileName == publicFileName && m.EventId == eventId).FirstOrDefaultAsync();
+    }
+
+    public async Task<List<MediaNameDto>> GetMediaObjectsAsync(int eventId, bool isPrivate, int limit, int? cursor)
+    {
+        return await context.Media
+            .Where(m => m.EventId == eventId && m.IsPrivate == isPrivate && m.Status == UploadStatus.Completed && (!cursor.HasValue || m.Id < cursor.Value))
+            .Select(m => new MediaNameDto { Id = m.Id, PublicFileName = m.PublicFileName, FileName= m.FileName})
+            .OrderByDescending(m => m.Id)
+            .Take(limit + 1)
+            .AsNoTracking()
+            .ToListAsync();
     }
 }

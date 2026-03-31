@@ -1,4 +1,4 @@
-namespace Infrastructure.EntityFramework.Models;
+namespace Infrastructure.EntityFramework.Models.DTOs;
 
 public class MediaStateTransitionDto
 {

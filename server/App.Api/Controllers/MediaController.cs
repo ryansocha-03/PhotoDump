@@ -1,10 +1,13 @@
 using App.Api.Models.Request;
 using App.Api.Models.Response;
 using App.Api.Services;
+using App.Api.Services.DTOs;
+using Core.DTOs;
 using Core.Interfaces;
 using Core.Models;
 using Identity.Services.Sessions;
 using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,16 +20,18 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
     [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpGet("download")]
     public async Task<IActionResult> GetEventPublicMediaDownload(
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
+        [FromQuery] string? cursor,
+        [FromQuery] int? limit)
     {
         var eventId = await eventService.GetEventIdByPublicId(eventPublicIdHeader);
         if (eventId is not { } resolvedEventId)
             return NotFound("No event found.");
 
-        List<MediaFileNameInfo> publicFileNames;
+        PaginationDto<MediaNameDto> mediaPageData;
         try
         {
-            publicFileNames = mediaService.GetMediaForEvent(resolvedEventId, false);
+            mediaPageData = await mediaService.GetPublicMediaPageAsync(resolvedEventId, eventPublicIdHeader, cursor, limit);
         }
         catch (Exception ex)
         {
@@ -34,14 +39,14 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             return StatusCode(500, "Unexpected error when getting media.");
         }
         
-        if (publicFileNames.Count == 0)
+        if (mediaPageData.Items.Count == 0)
             return Ok(new List<string>());
 
         IEnumerable<string> urls;
         try
         {
             urls = await contentStoreService.GenerateBulkPresignedDownloadUrls(
-                publicFileNames,
+                mediaPageData.Items,
                 eventPublicIdHeader,
                 FilePrivacyEnum.Public);
         }
@@ -50,8 +55,13 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             Console.Error.WriteLine(ex);
             return StatusCode(500, "Unexpected error when generating downloads.");
         }
-
-        return Ok(urls);
+        
+        return Ok(new PaginationDto<string>
+        {
+            Items = urls.ToList(),
+            HasNext = mediaPageData.HasNext,
+            NextCursor = mediaPageData.NextCursor
+        });
     }
     
     [Authorize(AuthenticationSchemes = "SessionScheme")]

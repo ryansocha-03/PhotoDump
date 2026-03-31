@@ -1,4 +1,5 @@
 using Core.Configuration.DTOs;
+using Core.DTOs;
 using Core.Models;
 
 namespace Core.Interfaces;
@@ -13,7 +14,7 @@ public interface IContentStoreService
 
     public Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames, Guid eventId, FilePrivacyEnum privacy);
     
-    public Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaFileNameInfo> fileNames, Guid eventId, FilePrivacyEnum privacy);
+    public Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy);
 
     public Task<bool> DeleteMediaFromEvent(Guid eventId, FilePrivacyEnum privacy, string fileName);
     public Task<List<string>> ListObjectsInBucket(Guid eventId);

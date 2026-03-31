@@ -1,6 +1,7 @@
 using ContentStore.MinIO.Interfaces;
 using Core.Configuration.ConfigurationModels;
 using Core.Configuration.DTOs;
+using Core.DTOs;
 using Core.Interfaces;
 using Core.Models;
 using Microsoft.Extensions.Options;
@@ -50,7 +51,7 @@ public class MinioService(
         return urls;
     }
     
-    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaFileNameInfo> fileNames, Guid eventId, FilePrivacyEnum privacy)
+    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy)
     {
         List<string> urls = [];
         
@@ -61,10 +62,10 @@ public class MinioService(
         foreach (var fileName in fileNames)
         {
             args
-                .WithObject(BuildObjectName(eventId, privacy, fileName.UrlFileName))
+                .WithObject(BuildObjectName(eventId, privacy, fileName.PublicFileName))
                 .WithHeaders(new Dictionary<string, string>
                 {
-                    {"Content-Disposition", $"attachment; filename=\"{fileName.DownloadFileName}\""}
+                    {"Content-Disposition", $"attachment; filename=\"{fileName.FileName}\""}
                 });
             urls.Add(await _externalS3Client.PresignedGetObjectAsync(args));
         }

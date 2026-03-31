@@ -1,4 +1,6 @@
+using Core.DTOs;
 using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Models.DTOs;
 
 namespace Infrastructure.EntityFramework.Repositories.Interfaces;
 
@@ -13,4 +15,6 @@ public interface IMediaRepository : IRepository<Media>
     public Task<List<MediaStateTransitionDto>> MediaStateTransitionAsync(string publicFileId, Guid eventId, string currentState, string desiredState);
     
     public Task<Media?> GetMediaByPublicFileName(string publicFileName, int eventId);
+    
+    public Task<List<MediaNameDto>> GetMediaObjectsAsync(int eventId, bool isPrivate, int limit, int? cursor);
 }

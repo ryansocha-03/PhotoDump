@@ -1,13 +1,19 @@
+using App.Api.Models;
 using App.Api.Models.Request;
+using App.Api.Services.DTOs;
 using ContentStore.MinIO.Utilities;
+using Core.DTOs;
 using Core.Models;
 using Infrastructure.EntityFramework.Models;
+using Infrastructure.EntityFramework.Models.DTOs;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 
 namespace App.Api.Services;
 
-public class MediaService(IMediaRepository mediaRepository)
+public class MediaService(IMediaRepository mediaRepository, MediaCursorService cursorService)
 {
+    private const int MaxMediaPageSize = 9;
+
     public async Task<List<string>> UploadMedia(List<MediaUploadInfo> mediaUploadInfo, int eventId, bool isPrivate)
     {
         List<string> publicFileNames = [];
@@ -38,16 +44,34 @@ public class MediaService(IMediaRepository mediaRepository)
         return publicFileNames;
     }
 
+    public async Task<PaginationDto<MediaNameDto>> GetPublicMediaPageAsync(int eventId, Guid expectedEventPublicId, string? cursor, int? limit)
+    {
+        var normalizedLimit = limit < MaxMediaPageSize ? limit.Value :  MaxMediaPageSize;
+        var mediaId = cursorService.DecodeCursor(cursor, expectedEventPublicId);
+
+        var mediaData = await mediaRepository.GetMediaObjectsAsync(eventId, false, normalizedLimit, mediaId);
+
+        var mediaPaginationData = new PaginationDto<MediaNameDto>();
+        if (mediaData.Count > MaxMediaPageSize)
+        {
+            mediaData.RemoveAt(mediaData.Count - 1);
+            var nextCursor = cursorService.EncodeCursor(new MediaCursorPayload
+            {
+                EventPublicId = expectedEventPublicId, 
+                MediaId = mediaData[^1].Id
+            });
+            mediaPaginationData.NextCursor = nextCursor;
+            mediaPaginationData.HasNext = true;
+        }
+
+        mediaPaginationData.Items = mediaData;
+        
+        return mediaPaginationData;
+    }
+
     public List<Media> GetAllMediaForEvent(int eventId)
     {
         return mediaRepository.GetAll(eventId).ToList();
-    }
-
-    public List<MediaFileNameInfo> GetMediaForEvent(int eventId,  bool isPrivate)
-    {
-        var mediaData = mediaRepository.GetAll(eventId, isPrivate);
-        return mediaData.Select(media => new MediaFileNameInfo
-            { DownloadFileName = media.FileName, UrlFileName = media.PublicFileName }).ToList();
     }
 
     public async Task<List<MediaStateTransitionDto>> AcknowledgeUploadStateTransition(string publicFileName, Guid eventPublicId)
@@ -55,11 +79,6 @@ public class MediaService(IMediaRepository mediaRepository)
         return await mediaRepository.MediaStateTransitionAsync(publicFileName, eventPublicId, UploadStatus.Pending, UploadStatus.Uploaded);
     }
 
-    public async Task<Media?> GetMediaByPublicFileName(string publicFileName, int eventId)
-    {
-        return await mediaRepository.GetMediaByPublicFileName(publicFileName, eventId);
-    }
-    
     public async Task<bool> DeleteMedia(int id)
     {
         return await mediaRepository.DeleteAsync(id);
@@ -69,8 +88,6 @@ public class MediaService(IMediaRepository mediaRepository)
     {
         return await mediaRepository.GetAsync(mediaId);
     }
-    
-    
 
     private static string GetFileExtension(string fileName)
     {
