@@ -1,5 +1,4 @@
 using Core.Interfaces;
-using Microsoft.AspNetCore.DataProtection;
 
 namespace App.Api.Services;
 

@@ -19,7 +19,7 @@ public static class IdentityServiceExtensions
       services.Configure<SessionAuthConfigurationModel>(configuration.GetSection("SessionAuth"));
       
       services.AddAuthentication("SessionScheme")
-         .AddScheme<AuthenticationSchemeOptions, EventSessionAuthHandler>("SessionScheme", options => { });
+         .AddScheme<AuthenticationSchemeOptions, EventSessionAuthHandler>("SessionScheme", _ => { });
 
       services.AddScoped<SessionService>();
    }

@@ -1,4 +1,4 @@
-using App.Api.Models;
+using App.Api.Models.Request;
 using App.Api.Models.Response;
 using App.Api.Services;
 using Identity.Models;

@@ -1,4 +1,4 @@
-using Core.Configuration.Models;
+using Core.Configuration.ConfigurationModels;
 using Infrastructure.EntityFramework.Contexts;
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Repositories;

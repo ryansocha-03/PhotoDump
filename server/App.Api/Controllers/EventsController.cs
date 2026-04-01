@@ -1,11 +1,5 @@
-using App.Api.Models;
-using App.Api.Models.Request;
 using App.Api.Models.Response;
 using App.Api.Services;
-using Core.Interfaces;
-using Core.Models;
-using Identity.Models;
-using Identity.Services;
 using Identity.Services.Sessions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

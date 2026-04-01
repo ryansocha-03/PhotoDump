@@ -37,7 +37,7 @@ public class BrokerConnectionService(IOptions<BrokerClientConfigurationModel> co
 
         // Declare the queue once when we first create the singleton connection.
         await using var channel = await _connection.CreateChannelAsync();
-        await channel.QueueDeclareAsync(configuration.Value.QueueName, true, false, false, null);
+        await channel.QueueDeclareAsync(configuration.Value.QueueName, true, false, false);
         
         return _connection;
     }

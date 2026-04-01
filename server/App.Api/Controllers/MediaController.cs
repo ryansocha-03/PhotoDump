@@ -6,7 +6,6 @@ using Core.DTOs;
 using Core.Interfaces;
 using Core.Models;
 using Identity.Services.Sessions;
-using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

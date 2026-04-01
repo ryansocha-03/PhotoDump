@@ -1,7 +1,6 @@
 using Admin.Api.Models;
 using Identity.Services;
 using Infrastructure.EntityFramework.Models;
-using Infrastructure.EntityFramework.Repositories;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

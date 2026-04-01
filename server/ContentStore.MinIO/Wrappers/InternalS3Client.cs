@@ -1,6 +1,6 @@
 using Minio;
 
-namespace ContentStore.MinIO.Interfaces;
+namespace ContentStore.MinIO.Wrappers;
 
 public class InternalS3Client(IMinioClient minioClient) : IInternalS3Client
 {

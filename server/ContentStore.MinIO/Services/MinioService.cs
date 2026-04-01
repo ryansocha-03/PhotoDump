@@ -1,4 +1,4 @@
-using ContentStore.MinIO.Interfaces;
+using ContentStore.MinIO.Wrappers;
 using Core.Configuration.ConfigurationModels;
 using Core.Configuration.DTOs;
 using Core.DTOs;
@@ -85,7 +85,7 @@ public class MinioService(
             var url = await _externalS3Client.PresignedGetObjectAsync(args);
             return url;
         }
-        catch (MinioException e)
+        catch (MinioException)
         {
             return null;
         }
@@ -102,7 +102,7 @@ public class MinioService(
 
             return await _externalS3Client.PresignedPutObjectAsync(args);
         }
-        catch (MinioException e)
+        catch (MinioException)
         {
             return null;
         }

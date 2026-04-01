@@ -1,8 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using Core.Configuration.ConfigurationModels;
 using Core.Interfaces;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace App.Api.Services;
@@ -13,7 +11,7 @@ public class BrokerService(IBrokerConnection connection): IBrokerPublisher
     {
         var conn = await connection.GetConnectionAsync();
         await using var channel = await conn.CreateChannelAsync();
-        channel.BasicReturnAsync += (sender, ea) =>
+        channel.BasicReturnAsync += (_, _) =>
         {
             Console.Error.WriteLine("Message was returned"); // TODO: Handle unroutable messages better
             return null!;

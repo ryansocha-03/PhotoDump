@@ -1,6 +1,6 @@
 using Minio;
 
-namespace ContentStore.MinIO.Interfaces;
+namespace ContentStore.MinIO.Wrappers;
 
 public interface IExternalS3Client 
 {

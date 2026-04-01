@@ -1,4 +1,4 @@
-namespace App.Api.Models;
+namespace App.Api.Models.Request;
 
 public class GuestLoginRequestModel
 {

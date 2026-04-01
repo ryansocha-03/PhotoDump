@@ -1,7 +1,6 @@
-using ContentStore.MinIO.Interfaces;
 using ContentStore.MinIO.Services;
+using ContentStore.MinIO.Wrappers;
 using Core.Configuration.ConfigurationModels;
-using Core.Configuration.Models;
 using Core.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +18,7 @@ public static class MinIoServiceExtensions
             .WithEndpoint(contentStoreConfig.ExternalEndpoint)
             .WithRegion(contentStoreConfig.Region)
             .WithCredentials(contentStoreConfig.AccessKey, contentStoreConfig.SecretKey)
-            .WithSSL(environmentName.ToLower() != "development")
+            .WithSSL(!environmentName.Equals("development", StringComparison.CurrentCultureIgnoreCase))
             .Build();
         
         services.AddSingleton<IExternalS3Client>(new ExternalS3Client(externalStorageClient));
@@ -28,7 +27,7 @@ public static class MinIoServiceExtensions
             .WithEndpoint(contentStoreConfig.InternalEndpoint)
             .WithRegion(contentStoreConfig.Region)
             .WithCredentials(contentStoreConfig.AccessKey, contentStoreConfig.SecretKey)
-            .WithSSL(environmentName.ToLower() != "development")
+            .WithSSL(!environmentName.Equals("development", StringComparison.CurrentCultureIgnoreCase))
             .Build();
         
         services.AddSingleton<IInternalS3Client>(new InternalS3Client(internalStorageClient));

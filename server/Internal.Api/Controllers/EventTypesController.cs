@@ -1,5 +1,4 @@
 using Infrastructure.EntityFramework.Models;
-using Infrastructure.EntityFramework.Repositories;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Internal.Api.Models;
 using Microsoft.AspNetCore.Mvc;

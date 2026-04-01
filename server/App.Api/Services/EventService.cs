@@ -1,5 +1,4 @@
 using App.Api.Models.Response;
-using Infrastructure.EntityFramework.Repositories;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
 
 namespace App.Api.Services;
