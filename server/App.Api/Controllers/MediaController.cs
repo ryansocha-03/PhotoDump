@@ -38,9 +38,9 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             Console.Error.WriteLine(ex);
             return StatusCode(500, "Unexpected error when getting media.");
         }
-        
+
         if (mediaPageData.Items.Count == 0)
-            return Ok(new List<string>());
+            return Ok(mediaPageData);
 
         IEnumerable<string> urls;
         try

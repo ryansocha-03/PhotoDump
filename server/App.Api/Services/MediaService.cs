@@ -52,7 +52,7 @@ public class MediaService(IMediaRepository mediaRepository, MediaCursorService c
         var mediaData = await mediaRepository.GetMediaObjectsAsync(eventId, false, normalizedLimit, mediaId);
 
         var mediaPaginationData = new PaginationDto<MediaNameDto>();
-        if (mediaData.Count > MaxMediaPageSize)
+        if (mediaData.Count > normalizedLimit)
         {
             mediaData.RemoveAt(mediaData.Count - 1);
             var nextCursor = cursorService.EncodeCursor(new MediaCursorPayload
