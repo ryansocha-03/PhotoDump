@@ -14,10 +14,10 @@ public interface IContentStoreService
 
     public Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames, Guid eventId, FilePrivacyEnum privacy);
     
-    public Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy);
+    public Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy, string suffix = "");
 
     public Task<bool> DeleteMediaFromEvent(Guid eventId, FilePrivacyEnum privacy, string fileName);
     public Task<List<string>> ListObjectsInBucket(Guid eventId);
 
-    public string BuildObjectName(Guid eventId, FilePrivacyEnum privacy, string fileName);
+    public string BuildObjectName(Guid eventId, FilePrivacyEnum privacy, string fileName, string suffix = "");
 }

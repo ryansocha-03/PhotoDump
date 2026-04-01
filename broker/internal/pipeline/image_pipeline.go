@@ -106,5 +106,5 @@ func VariantObjectName(originalObjectName string, variant mediaimage.GeneratedVa
 	extension := path.Ext(baseName)
 	rootName := strings.TrimSuffix(baseName, extension)
 
-	return path.Join(dir, fmt.Sprintf("%s_%s.%s", rootName, variant.Name, variant.Extension))
+	return path.Join(dir, fmt.Sprintf("%s_%s", rootName, variant.Name))
 }

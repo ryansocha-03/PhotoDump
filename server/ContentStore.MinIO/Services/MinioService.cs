@@ -51,7 +51,7 @@ public class MinioService(
         return urls;
     }
     
-    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy)
+    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy, string suffix = "")
     {
         List<string> urls = [];
         
@@ -62,7 +62,7 @@ public class MinioService(
         foreach (var fileName in fileNames)
         {
             args
-                .WithObject(BuildObjectName(eventId, privacy, fileName.PublicFileName))
+                .WithObject(BuildObjectName(eventId, privacy, fileName.PublicFileName, suffix))
                 .WithHeaders(new Dictionary<string, string>
                 {
                     {"Content-Disposition", $"attachment; filename=\"{fileName.FileName}\""}
@@ -126,9 +126,9 @@ public class MinioService(
         return true;
     }
 
-    public string BuildObjectName(Guid eventPublicId, FilePrivacyEnum privacy, string fileName)
+    public string BuildObjectName(Guid eventPublicId, FilePrivacyEnum privacy, string fileName, string suffix = "")
     {
-        return $"{eventPublicId}/{privacy.ToString().ToLower()}/{fileName}";
+        return $"{eventPublicId}/{privacy.ToString().ToLower()}/{fileName}{suffix.Trim()}";
     }
 
     public async Task<List<string>> ListObjectsInBucket(Guid eventId)

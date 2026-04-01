@@ -47,7 +47,8 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             urls = await contentStoreService.GenerateBulkPresignedDownloadUrls(
                 mediaPageData.Items,
                 eventPublicIdHeader,
-                FilePrivacyEnum.Public);
+                FilePrivacyEnum.Public,
+                "_gallery");
         }
         catch (Exception ex)
         {
@@ -118,11 +119,11 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
     }
 
     [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpPost("upload/{fileId}/complete")]
-    public async Task<IActionResult> AcknowledgeCompletedUpload([FromRoute] string fileId,
+    [HttpPost("upload/{publicFileId}/complete")]
+    public async Task<IActionResult> AcknowledgeCompletedUpload([FromRoute] string publicFileId,
         [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
     {
-        var numUpdated = await mediaService.AcknowledgeUploadStateTransition(fileId, eventPublicIdHeader);
+        var numUpdated = await mediaService.AcknowledgeUploadStateTransition(publicFileId, eventPublicIdHeader);
 
         MediaStateTransitionDto uploadedMedia;
         switch  (numUpdated.Count)
@@ -141,7 +142,7 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             ObjectName = contentStoreService.BuildObjectName(
                 eventPublicIdHeader, 
                 uploadedMedia.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public,
-                fileId
+                publicFileId 
             ),
             MediaId = uploadedMedia.MediaInternalId
         });
