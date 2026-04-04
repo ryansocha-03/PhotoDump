@@ -189,4 +189,12 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
 
         return Ok();
     }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteObjectFromBucket([FromQuery] string objectName)
+    {
+        await contentStoreService.DeleteObjectFromBucket(objectName);
+
+        return Ok();
+    }
 }

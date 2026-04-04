@@ -131,6 +131,15 @@ public class MinioService(
         return $"{eventPublicId}/{privacy.ToString().ToLower()}/{fileName}{suffix.Trim()}";
     }
 
+    public async Task DeleteObjectFromBucket(string objectName)
+    {
+        var args = new RemoveObjectArgs()
+            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithObject(objectName);
+        
+        await _internalS3Client.RemoveObjectAsync(args);
+    }
+
     public async Task<List<string>> ListObjectsInBucket(Guid eventId)
     {
         var args = new ListObjectsArgs()

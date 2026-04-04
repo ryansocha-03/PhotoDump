@@ -20,4 +20,6 @@ public interface IContentStoreService
     public Task<List<string>> ListObjectsInBucket(Guid eventId);
 
     public string BuildObjectName(Guid eventId, FilePrivacyEnum privacy, string fileName, string suffix = "");
+    
+    public Task DeleteObjectFromBucket(string objectName);
 }
