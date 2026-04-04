@@ -65,6 +65,8 @@ services:
       ContentStore__InternalEndpoint: garage:${GARAGE_API_PORT}
       ContentStore__Region: "${GARAGE_REGION}"
       SessionAuth__SessionDurationMinutes: 240 
+      WorkerAuth__HeaderName: "X-Worker-Token"
+      WorkerAuth__Token: "${IMAGE_WORKER_TOKEN}"
       BrokerClient__Host: "broker"
       BrokerClient__Port: ${BROKER_PORT}
       BrokerClient__UserName: "${BROKER_USER}"
