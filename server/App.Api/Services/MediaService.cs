@@ -79,6 +79,11 @@ public class MediaService(IMediaRepository mediaRepository, MediaCursorService c
         return await mediaRepository.MediaStateTransitionAsync(publicFileName, eventPublicId, UploadStatus.Pending, UploadStatus.Uploaded);
     }
 
+    public async Task<List<MediaStateTransitionDto>> AcknowledgeCompleteStateTransition(int mediaId)
+    {
+        return await mediaRepository.MediaStateTransitionAsync(mediaId, UploadStatus.Uploaded, UploadStatus.Completed);
+    }
+
     public async Task<bool> DeleteMedia(int id)
     {
         return await mediaRepository.DeleteAsync(id);

@@ -14,6 +14,8 @@ public interface IMediaRepository : IRepository<Media>
     
     public Task<List<MediaStateTransitionDto>> MediaStateTransitionAsync(string publicFileId, Guid eventId, string currentState, string desiredState);
     
+    public Task<List<MediaStateTransitionDto>> MediaStateTransitionAsync(int mediaId, string currentState, string desiredState);
+    
     public Task<Media?> GetMediaByPublicFileName(string publicFileName, int eventId);
     
     public Task<List<MediaNameDto>> GetMediaObjectsAsync(int eventId, bool isPrivate, int limit, int? cursor);

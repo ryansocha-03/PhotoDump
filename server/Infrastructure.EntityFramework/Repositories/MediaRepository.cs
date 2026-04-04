@@ -81,6 +81,21 @@ public class MediaRepository(AppDbContext context) : IMediaRepository
         return result;
     }
 
+    public async Task<List<MediaStateTransitionDto>> MediaStateTransitionAsync(int mediaId, string currentState,
+        string desiredState)
+    {
+        var result = await context.Database.SqlQuery<MediaStateTransitionDto>(@$"
+            UPDATE ""Media"" m
+            SET ""Status"" = {desiredState}
+            WHERE m.""Id"" = {mediaId}
+              AND m.""Status"" = {currentState}
+            RETURNING m.""Id"" as ""MediaInternalId"",
+                      m.""IsPrivate"" as ""IsPrivate"";
+        ").ToListAsync();
+
+        return result;
+    }
+
     public async Task<Media?> GetMediaByPublicFileName(string publicFileName, int eventId)
     {
         return await context.Media.Where(m => m.PublicFileName == publicFileName && m.EventId == eventId).FirstOrDefaultAsync();

@@ -29,7 +29,7 @@ public static class IdentityServiceExtensions
    {
       services.Configure<WorkerAuthConfiguration>(configuration.GetSection("WorkerAuth"));
 
-      services.AddAuthentication().AddScheme<WorkerAuthConfiguration, WorkerAuthHandler>("WorkerAuth", options =>
+      services.AddAuthentication().AddScheme<WorkerAuthConfiguration, WorkerAuthHandler>("WorkerScheme", options =>
       {
          options.HeaderName = configuration["WorkerAuth:HeaderName"] ?? "X-Worker-Auth";
          options.Token = configuration["WorkerAuth:Token"]!;
