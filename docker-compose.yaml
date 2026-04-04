@@ -64,6 +64,7 @@ services:
       ContentStore__ExternalEndpoint: "${CONTENT_STORE_DOMAIN}"
       ContentStore__InternalEndpoint: garage:${GARAGE_API_PORT}
       ContentStore__Region: "${GARAGE_REGION}"
+      ContentStore__Bucket: "${CONTENT_STORE_MAIN_BUCKET}"
       SessionAuth__SessionDurationMinutes: 240 
       WorkerAuth__HeaderName: "X-Worker-Token"
       WorkerAuth__Token: "${IMAGE_WORKER_TOKEN}"
@@ -73,6 +74,25 @@ services:
       BrokerClient__Password: "${BROKER_PASSWORD}"
       BrokerClient__QueueName: "photo-thumbnail"
       DOTNET_ENVIRONMENT: "Development"
+    restart: always
+
+  image-worker:
+    build:
+      context: .
+      dockerfile: broker/Dockerfile
+    depends_on:
+      - garage
+      - broker
+    environment:
+      PD_CONTENT_STORE_DOMAIN: "garage:${GARAGE_API_PORT}"
+      PD_CONTENT_STORE_KEY: "${GARAGE_APP_KEY}"
+      PD_CONTENT_STORE_SECRET: "${GARAGE_APP_SECRET}"
+      PD_CONTENT_STORE_BUCKET: "${CONTENT_STORE_MAIN_BUCKET}"
+      PD_CONTENT_STORE_SECURE: "false"
+      PD_QUEUE_CONNECTION_STRING: "amqp://${BROKER_USER}:${BROKER_PASSWORD}@broker:${BROKER_PORT}"
+      PD_QUEUE_NAME: "photo-thumbnail"
+      PD_MAX_WORKERS: 4
+      PD_MAX_MESSAGES: 4
     restart: always
 
 volumes:

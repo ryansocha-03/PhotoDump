@@ -10,7 +10,7 @@ rpc_secret = "$GARAGE_RPC_KEY"
 
 [s3_api]
 s3_region = "$GARAGE_REGION"
-api_bind_addr = "[::]:3900"
+api_bind_addr = "[::]:$GARAGE_API_PORT"
 root_domain = ".s3.garage.localhost"
 
 [s3_web]
