@@ -1,9 +1,10 @@
-import { addEventHeaders } from "@/app/lib/auth/api";
 import { SESSION_COOKIE_NAME } from "@/app/lib/auth/cookie";
 import { SessionTypeModel, SessionTypes } from "@/app/lib/auth/session-types";
+import { getEventThumbnailUrls } from "@/app/lib/media/data";
 import PhotoWrapper from "@/app/ui/photos/photo-wrapper";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { addEventHeaders } from "@/app/lib/auth/api";
 
 export default async function EventPhotosPage({
     params
@@ -28,19 +29,14 @@ export default async function EventPhotosPage({
         redirect(`/e/${publicEventId}`);
     }
 
-    const eventPhotoDownload = new Request(`${process.env.APP_API_URL}/media/download`);
-    addEventHeaders(eventPhotoDownload, sessionId, publicEventId);
-
-    const eventDownloadResponse = await fetch(eventPhotoDownload);
-    
-    let imageMetaData: string[] = [];
-    if (eventDownloadResponse.ok) {
-        imageMetaData = await eventDownloadResponse.json();
-    }
+    const thumbnailUrlData = await getEventThumbnailUrls(sessionId, publicEventId);
+    const thumbnailUrls = thumbnailUrlData.code == 200 && thumbnailUrlData.data
+        ? thumbnailUrlData.data.items
+        : [];
 
     return (
         <>
-            <PhotoWrapper mediaMetadata={imageMetaData} />
+            <PhotoWrapper thumbnailUrls={thumbnailUrls} />
         </>
     )
 }

@@ -1,22 +1,17 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export default function PhotoItem({
-    photoData
+    thumbnailUrl
 }: {
-    photoData: string 
+    thumbnailUrl: string 
 }) {
-    const [isLoaded, setIsLoaded]= useState(false);
-
-    useEffect(() => {
-        const image = new Image();
-        image.src = photoData;
-        if (image.complete) setIsLoaded(true);
-    }, [photoData]);
+    const [loadedThumbnailUrl, setLoadedThumbnailUrl] = useState<string | null>(null);
+    const isLoaded = loadedThumbnailUrl == thumbnailUrl;
 
     const loadHandler = () => {
-        setIsLoaded(true)
+        setLoadedThumbnailUrl(thumbnailUrl)
     }
 
     return (
@@ -26,9 +21,10 @@ export default function PhotoItem({
             }
 
             <img 
-                src={photoData}
+                src={thumbnailUrl}
                 alt="thumbnail"
                 onLoad={() => loadHandler()}
+                onError={() => setLoadedThumbnailUrl(null)}
                 className="w-full h-full object-cover"
             />
         </div>

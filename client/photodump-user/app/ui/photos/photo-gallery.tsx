@@ -3,18 +3,18 @@
 import PhotoItem from "./photo-item"
 
 export default function PhotoGallery({
-    mediaMetadata
+    thumbnailUrls
 }: {
-    mediaMetadata: string[]
+    thumbnailUrls: string[]
 }) {
 
     return (
         <div className="grid grid-cols-3 gap-2 lg:gap-6">
             {
-                mediaMetadata.length == 0
+                thumbnailUrls.length == 0
                 ? <div>No event photos yet. Upload public photos to share with other guests.</div>
-                : mediaMetadata.map((m, i) => (
-                    <PhotoItem key={`thumbnail-${i}`} photoData={m}/>
+                : thumbnailUrls.map((thumbnailUrl, i) => (
+                    <PhotoItem key={`thumbnail-${i}`} thumbnailUrl={thumbnailUrl}/>
                 ))
             }
         </div>

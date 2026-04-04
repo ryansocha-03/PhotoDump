@@ -4,7 +4,6 @@ import { useState } from "react"
 import { FilledButton, OutlinedButton } from "../buttons"
 import PhotoGallery from "./photo-gallery"
 import AddMediaModal from "./photo-add-modal"
-import { Dialog, DialogBackdrop } from "@headlessui/react"
 
 export enum PhotoMode {
     Default,
@@ -13,15 +12,15 @@ export enum PhotoMode {
 }
 
 export default function PhotoWrapper({
-    mediaMetadata
+    thumbnailUrls
 }: {
-    mediaMetadata: string[]
+    thumbnailUrls: string[]
 }) {
     const [photoMode, setPhotoMode] = useState<PhotoMode>(PhotoMode.Default);
 
     return (
         <>
-           <AddMediaModal mode={photoMode} closeHandler={(m: PhotoMode) => setPhotoMode(PhotoMode.Default)} /> 
+           <AddMediaModal mode={photoMode} closeHandler={() => setPhotoMode(PhotoMode.Default)} /> 
 
             <div className="flex justify-between mb-5">
                 <p className="text-lg">Event Photos</p>
@@ -39,7 +38,7 @@ export default function PhotoWrapper({
                     </div>
                 </div>
             </div>
-            <PhotoGallery mediaMetadata={mediaMetadata} /> 
+            <PhotoGallery thumbnailUrls={thumbnailUrls} /> 
         </>
     )
 }
