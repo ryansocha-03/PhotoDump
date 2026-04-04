@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"photodump/workers/internal/appapi"
 	"photodump/workers/internal/config"
 	mediaimage "photodump/workers/internal/media/image"
 	"photodump/workers/internal/pipeline"
@@ -26,7 +27,9 @@ func main() {
 
 	log.Printf("Connected to object storage at: %v", cfg.ContentStoreURL)
 
-	imagePipeline, err := pipeline.NewImageVariantPipeline(objectStorage, imageProcessor, mediaimage.DefaultVariantSpecs())
+	mediaClient := appapi.NewMediaClient(cfg.AppApiBaseUrl, cfg.TokenHeaderName, cfg.AppApiToken, nil)
+
+	imagePipeline, err := pipeline.NewImageVariantPipeline(objectStorage, imageProcessor, mediaimage.DefaultVariantSpecs(), mediaClient)
 	failOnError(err, "Issue creating image processing pipeline")
 
 	queueConn, err := queue.InitializeConnection(cfg)

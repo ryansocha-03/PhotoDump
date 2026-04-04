@@ -18,6 +18,9 @@ type Config struct {
 	QueueName          string `mapstructure:"queue_name"`
 	MaxWorkers         int    `mapstructure:"max_workers"`
 	MaxMessages        int    `mapstructure:"max_messages"`
+	AppApiBaseUrl      string `mapstructure:"app_api_base_url"`
+	AppApiToken        string `mapstructure:"app_api_token"`
+	TokenHeaderName    string `mapstructure:"token_header_name"`
 }
 
 func Load() (*Config, error) {
@@ -74,6 +77,9 @@ func requiredKeys() []string {
 		"queue_name",
 		"max_workers",
 		"max_messages",
+		"app_api_base_url",
+		"app_api_token",
+		"token_header_name",
 	}
 }
 

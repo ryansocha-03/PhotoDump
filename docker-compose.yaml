@@ -93,6 +93,9 @@ services:
       PD_QUEUE_NAME: "photo-thumbnail"
       PD_MAX_WORKERS: 4
       PD_MAX_MESSAGES: 4
+      PD_APP_API_BASE_URL: "http://app-api:${APP_API_PORT}"
+      PD_APP_API_TOKEN: ${IMAGE_WORKER_TOKEN}
+      PD_TOKEN_HEADER_NAME: "X-Worker-Token"
     restart: always
 
 volumes:

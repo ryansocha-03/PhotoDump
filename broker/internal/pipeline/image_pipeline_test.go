@@ -15,6 +15,7 @@ func TestProcessMessageReturnsNonRetryableWhenObjectMissing(t *testing.T) {
 		&fakeStore{getErr: &storage.ObjectNotFoundError{ObjectName: "missing.jpg"}},
 		&fakeGenerator{},
 		mediaimage.DefaultVariantSpecs(),
+		&fakeNotifier{},
 	)
 	if err != nil {
 		t.Fatalf("expected pipeline creation to succeed, got %v", err)
@@ -35,6 +36,7 @@ func TestProcessMessageReturnsNonRetryableForInvalidImage(t *testing.T) {
 		&fakeStore{getData: []byte("original")},
 		&fakeGenerator{err: &mediaimage.InvalidImageError{Err: errors.New("invalid image")}},
 		mediaimage.DefaultVariantSpecs(),
+		&fakeNotifier{},
 	)
 	if err != nil {
 		t.Fatalf("expected pipeline creation to succeed, got %v", err)
@@ -65,7 +67,8 @@ func TestProcessMessageUploadsGeneratedVariants(t *testing.T) {
 		},
 	}
 
-	pipe, err := NewImageVariantPipeline(store, generator, mediaimage.DefaultVariantSpecs())
+	notifier := &fakeNotifier{}
+	pipe, err := NewImageVariantPipeline(store, generator, mediaimage.DefaultVariantSpecs(), notifier)
 	if err != nil {
 		t.Fatalf("expected pipeline creation to succeed, got %v", err)
 	}
@@ -79,7 +82,7 @@ func TestProcessMessageUploadsGeneratedVariants(t *testing.T) {
 		t.Fatalf("expected 1 uploaded variant, got %d", got)
 	}
 
-	if store.putCalls[0].objectName != "abc/public/photo_gallery.jpg" {
+	if store.putCalls[0].objectName != "abc/public/photo_gallery" {
 		t.Fatalf("unexpected variant object name %q", store.putCalls[0].objectName)
 	}
 
@@ -94,6 +97,14 @@ func TestProcessMessageUploadsGeneratedVariants(t *testing.T) {
 	if len(generator.receivedSpecs) != 1 || generator.receivedSpecs[0].Name != "gallery" {
 		t.Fatalf("expected generator to receive default gallery spec, got %+v", generator.receivedSpecs)
 	}
+
+	if notifier.calls != 1 {
+		t.Fatalf("expected completion notifier to be called once, got %d", notifier.calls)
+	}
+
+	if notifier.mediaIDs[0] != 10 {
+		t.Fatalf("expected completion notifier media id to be 10, got %d", notifier.mediaIDs[0])
+	}
 }
 
 func TestVariantObjectNamePreservesThreePartObjectPath(t *testing.T) {
@@ -105,7 +116,7 @@ func TestVariantObjectNamePreservesThreePartObjectPath(t *testing.T) {
 		},
 	)
 
-	if variantObjectName != "4ccdf5c0-5648-4ebd-a2b7-63b75abcddd6/public/8bef58d7944a467aa64d6be902b4e177_gallery.jpg" {
+	if variantObjectName != "4ccdf5c0-5648-4ebd-a2b7-63b75abcddd6/public/8bef58d7944a467aa64d6be902b4e177_gallery" {
 		t.Fatalf("unexpected variant object name %q", variantObjectName)
 	}
 }
@@ -127,6 +138,7 @@ func TestProcessMessageReturnsRetryableWhenUploadFails(t *testing.T) {
 			},
 		},
 		mediaimage.DefaultVariantSpecs(),
+		&fakeNotifier{},
 	)
 	if err != nil {
 		t.Fatalf("expected pipeline creation to succeed, got %v", err)
@@ -143,6 +155,107 @@ func TestProcessMessageReturnsRetryableWhenUploadFails(t *testing.T) {
 
 	if !strings.Contains(msgErr.Message, "unable to upload variant") {
 		t.Fatalf("expected upload failure message, got %q", msgErr.Message)
+	}
+}
+
+func TestProcessMessageReturnsRetryableWhenCompletionCallbackFails(t *testing.T) {
+	notifier := &fakeNotifier{
+		err: &ProcessingError{
+			Message: "temporary api error",
+			Requeue: true,
+		},
+	}
+
+	pipe, err := NewImageVariantPipeline(
+		&fakeStore{getData: []byte("original")},
+		&fakeGenerator{
+			variants: []mediaimage.GeneratedVariant{
+				{
+					Name:        "gallery",
+					Bytes:       []byte("thumb"),
+					ContentType: "image/jpeg",
+					Extension:   "jpg",
+				},
+			},
+		},
+		mediaimage.DefaultVariantSpecs(),
+		notifier,
+	)
+	if err != nil {
+		t.Fatalf("expected pipeline creation to succeed, got %v", err)
+	}
+
+	msgErr := pipe.ProcessMessage(context.Background(), []byte(`{"ObjectName":"photo.jpg","MediaId":10}`))
+	if msgErr == nil {
+		t.Fatal("expected completion callback failure")
+	}
+
+	if !msgErr.Requeue {
+		t.Fatal("expected completion callback failure to be retryable")
+	}
+
+	if notifier.calls != 1 {
+		t.Fatalf("expected notifier to be called once, got %d", notifier.calls)
+	}
+}
+
+func TestProcessMessageReturnsNonRetryableWhenCompletionCallbackFails(t *testing.T) {
+	notifier := &fakeNotifier{
+		err: &ProcessingError{
+			Message: "invalid state",
+			Requeue: false,
+		},
+	}
+
+	pipe, err := NewImageVariantPipeline(
+		&fakeStore{getData: []byte("original")},
+		&fakeGenerator{
+			variants: []mediaimage.GeneratedVariant{
+				{
+					Name:        "gallery",
+					Bytes:       []byte("thumb"),
+					ContentType: "image/jpeg",
+					Extension:   "jpg",
+				},
+			},
+		},
+		mediaimage.DefaultVariantSpecs(),
+		notifier,
+	)
+	if err != nil {
+		t.Fatalf("expected pipeline creation to succeed, got %v", err)
+	}
+
+	msgErr := pipe.ProcessMessage(context.Background(), []byte(`{"ObjectName":"photo.jpg","MediaId":10}`))
+	if msgErr == nil {
+		t.Fatal("expected completion callback failure")
+	}
+
+	if msgErr.Requeue {
+		t.Fatal("expected completion callback failure to be non-retryable")
+	}
+}
+
+func TestProcessMessageDoesNotCallCompletionNotifierWhenProcessingFailsEarly(t *testing.T) {
+	notifier := &fakeNotifier{}
+
+	pipe, err := NewImageVariantPipeline(
+		&fakeStore{getErr: &storage.ObjectNotFoundError{ObjectName: "missing.jpg"}},
+		&fakeGenerator{},
+		mediaimage.DefaultVariantSpecs(),
+		notifier,
+	)
+	if err != nil {
+		t.Fatalf("expected pipeline creation to succeed, got %v", err)
+	}
+
+	msgErr := pipe.ProcessMessage(context.Background(), []byte(`{"ObjectName":"missing.jpg","MediaId":10}`))
+	if msgErr == nil {
+		t.Fatal("expected processing error for missing object")
+	}
+
+	if notifier.calls != 0 {
+		t.Fatalf("expected notifier not to be called, got %d calls", notifier.calls)
 	}
 }
 
@@ -197,4 +310,16 @@ func (g *fakeGenerator) GenerateVariants(_ context.Context, original []byte, spe
 	}
 
 	return g.variants, nil
+}
+
+type fakeNotifier struct {
+	err      *ProcessingError
+	calls    int
+	mediaIDs []int
+}
+
+func (n *fakeNotifier) MarkCompleted(_ context.Context, mediaID int) *ProcessingError {
+	n.calls++
+	n.mediaIDs = append(n.mediaIDs, mediaID)
+	return n.err
 }

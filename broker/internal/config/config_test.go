@@ -92,6 +92,9 @@ func newTestViper(overrides map[string]any) *viper.Viper {
 		"queue_name":              "thumbnail-jobs",
 		"max_workers":             2,
 		"max_messages":            2,
+		"app_api_base_url":        "http://app-api:8080",
+		"app_api_token":           "worker-token",
+		"token_header_name":       "X-Worker-Token",
 	}
 
 	for key, value := range overrides {

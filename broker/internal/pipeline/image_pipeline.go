@@ -26,13 +26,18 @@ type ImageVariantGenerator interface {
 	GenerateVariants(ctx context.Context, original []byte, specs []mediaimage.VariantSpec) ([]mediaimage.GeneratedVariant, error)
 }
 
+type CompletionNotifier interface {
+	MarkCompleted(ctx context.Context, mediaID int) *ProcessingError
+}
+
 type ImageVariantPipeline struct {
 	store     ObjectStore
 	generator ImageVariantGenerator
 	variants  []mediaimage.VariantSpec
+	notifier  CompletionNotifier
 }
 
-func NewImageVariantPipeline(store ObjectStore, generator ImageVariantGenerator, variants []mediaimage.VariantSpec) (*ImageVariantPipeline, error) {
+func NewImageVariantPipeline(store ObjectStore, generator ImageVariantGenerator, variants []mediaimage.VariantSpec, notifier CompletionNotifier) (*ImageVariantPipeline, error) {
 	if err := mediaimage.ValidateVariantSpecs(variants); err != nil {
 		return nil, err
 	}
@@ -43,6 +48,7 @@ func NewImageVariantPipeline(store ObjectStore, generator ImageVariantGenerator,
 		store:     store,
 		generator: generator,
 		variants:  copiedVariants,
+		notifier:  notifier,
 	}, nil
 }
 
@@ -95,6 +101,12 @@ func (p *ImageVariantPipeline) ProcessMessage(ctx context.Context, body []byte) 
 		}
 
 		log.Printf("Generated image variant %q for media %d at %q (%d bytes)", variant.Name, job.MediaID, variantObjectName, len(variant.Bytes))
+	}
+
+	if p.notifier != nil {
+		if msgErr := p.notifier.MarkCompleted(ctx, job.MediaID); msgErr != nil {
+			return msgErr
+		}
 	}
 
 	return nil
