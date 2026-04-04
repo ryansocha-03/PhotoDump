@@ -18,6 +18,7 @@ builder.Services.AddIdentityServices();
 builder.Services.AddApiServices();
 
 builder.Services.AddSessionAuth(builder.Configuration);
+builder.Services.AddWorkerAuth(builder.Configuration);
 
 builder.Services.AddControllers();
 
