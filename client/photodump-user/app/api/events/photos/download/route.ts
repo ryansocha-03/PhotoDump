@@ -14,10 +14,18 @@ export async function GET(request: NextRequest) {
     if (!eventId)
         return NextResponse.json({}, { status: 400 });
 
-    const eventPhotoDownload = new Request(`${process.env.APP_API_URL}/media/download`);
+    const appApiUrl = new URL(`${process.env.APP_API_URL}/media/download`);
+    const cursor = request.nextUrl.searchParams.get("cursor");
+    const limit = request.nextUrl.searchParams.get("limit");
+    if (cursor)
+        appApiUrl.searchParams.set("cursor", cursor);
+    if (limit)
+        appApiUrl.searchParams.set("limit", limit);
+
+    const eventPhotoDownload = new Request(appApiUrl);
     addEventHeaders(eventPhotoDownload, sessionId, eventId);
 
-    const eventDownloadResponse = await fetch(eventPhotoDownload);
+    const eventDownloadResponse = await fetch(eventPhotoDownload, { cache: "no-store" });
     
     if (eventDownloadResponse.status == 401) {
         const badResponse = NextResponse.json({}, { status: eventDownloadResponse.status });

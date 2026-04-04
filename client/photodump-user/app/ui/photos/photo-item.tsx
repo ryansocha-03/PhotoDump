@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 
 export default function PhotoItem({
     thumbnailUrl
@@ -9,6 +9,19 @@ export default function PhotoItem({
 }) {
     const [loadedThumbnailUrl, setLoadedThumbnailUrl] = useState<string | null>(null);
     const isLoaded = loadedThumbnailUrl == thumbnailUrl;
+
+    const imageRef = useCallback((node: HTMLImageElement | null) => {
+        if (!node) {
+            return;
+        }
+
+        if (node.complete && node.naturalWidth > 0) {
+            setLoadedThumbnailUrl(thumbnailUrl);
+            return;
+        }
+
+        setLoadedThumbnailUrl(null);
+    }, [thumbnailUrl]);
 
     const loadHandler = () => {
         setLoadedThumbnailUrl(thumbnailUrl)
@@ -21,6 +34,7 @@ export default function PhotoItem({
             }
 
             <img 
+                ref={imageRef}
                 src={thumbnailUrl}
                 alt="thumbnail"
                 onLoad={() => loadHandler()}

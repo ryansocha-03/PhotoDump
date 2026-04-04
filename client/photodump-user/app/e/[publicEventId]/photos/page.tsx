@@ -30,13 +30,20 @@ export default async function EventPhotosPage({
     }
 
     const thumbnailUrlData = await getEventThumbnailUrls(sessionId, publicEventId);
-    const thumbnailUrls = thumbnailUrlData.code == 200 && thumbnailUrlData.data
-        ? thumbnailUrlData.data.items
-        : [];
+    const initialThumbnailPage = thumbnailUrlData.code == 200 && thumbnailUrlData.data
+        ? thumbnailUrlData.data
+        : {
+            items: [],
+            hasNext: false,
+            nextCursor: null
+        };
 
     return (
         <>
-            <PhotoWrapper thumbnailUrls={thumbnailUrls} />
+            <PhotoWrapper
+                publicEventId={publicEventId}
+                initialThumbnailPage={initialThumbnailPage}
+            />
         </>
     )
 }
