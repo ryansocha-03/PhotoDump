@@ -1,17 +1,8 @@
 import { addEventHeaders } from "@/app/lib/auth/api";
 import { deleteSessionCookie, EVENT_HEADER_NAME, SESSION_COOKIE_NAME } from "@/app/lib/auth/cookie";
-import { cookies, headers } from "next/headers";
+import type { FileUploadRequest } from "@/app/lib/media/data";
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
-export interface FileUploadRequest {
-    MediaUploadInfo: FileUploadInfo[];
-    IsPrivate: boolean;
-}
-
-export interface FileUploadInfo {
-    FileName: string;
-    FileSize: number;
-} 
 
 export async function POST(request: NextRequest) {
     const cookieStore = await cookies();
@@ -22,11 +13,14 @@ export async function POST(request: NextRequest) {
     const eventId = request.headers.get(EVENT_HEADER_NAME);
     if (!eventId) return NextResponse.json({}, { status: 400 });
 
+    const uploadRequestBody: FileUploadRequest = await request.json();
     const mediaUploadRequest = new Request(`${process.env.APP_API_URL}/media/upload`,
         {
+            method: "POST",
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify(uploadRequestBody)
         }
     );
 
@@ -44,5 +38,5 @@ export async function POST(request: NextRequest) {
         return badResponse;
     }
 
-   return mediaUploadResponse;
-}
+   return NextResponse.json(await mediaUploadResponse.json());
+} 

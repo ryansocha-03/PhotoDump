@@ -347,7 +347,11 @@ export default function PhotoWrapper({
 
     return (
         <>
-           <AddMediaModal mode={photoMode} closeHandler={() => setPhotoMode(PhotoMode.Default)} /> 
+           <AddMediaModal
+                mode={photoMode}
+                publicEventId={publicEventId}
+                closeHandler={() => setPhotoMode(PhotoMode.Default)}
+            />
            <PhotoViewer
                 phase={viewerPhase}
                 photoUrl={focusedPhotoUrl}
