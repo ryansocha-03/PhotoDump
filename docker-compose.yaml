@@ -42,6 +42,7 @@ services:
       APP_API_PORT: ${APP_API_PORT}
       CONTENT_STORE_DOMAIN: ${CONTENT_STORE_DOMAIN}
       GARAGE_API_PORT: ${GARAGE_API_PORT}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN}
     depends_on:
       - app-api
       - garage
