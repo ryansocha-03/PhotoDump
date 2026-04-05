@@ -3,14 +3,22 @@
 import { useCallback, useState } from "react"
 
 export default function PhotoItem({
-    thumbnailUrl
+    thumbnailUrl,
+    selectedIndex,
+    openPhotoViewer,
+    registerThumbnailImage
 }: {
-    thumbnailUrl: string 
+    thumbnailUrl: string,
+    selectedIndex: number,
+    openPhotoViewer: (selectedIndex: number) => void,
+    registerThumbnailImage: (selectedIndex: number, image: HTMLImageElement | null) => void
 }) {
     const [loadedThumbnailUrl, setLoadedThumbnailUrl] = useState<string | null>(null);
     const isLoaded = loadedThumbnailUrl == thumbnailUrl;
 
     const imageRef = useCallback((node: HTMLImageElement | null) => {
+        registerThumbnailImage(selectedIndex, node);
+
         if (!node) {
             return;
         }
@@ -21,14 +29,18 @@ export default function PhotoItem({
         }
 
         setLoadedThumbnailUrl(null);
-    }, [thumbnailUrl]);
+    }, [registerThumbnailImage, selectedIndex, thumbnailUrl]);
 
     const loadHandler = () => {
         setLoadedThumbnailUrl(thumbnailUrl)
     }
 
     return (
-        <div className="flex items-center relative w-full overflow-hidden aspect-square rounded-md hover:cursor-pointer">
+        <button
+            type="button"
+            onClick={() => openPhotoViewer(selectedIndex)}
+            className="relative flex aspect-square w-full items-center overflow-hidden hover:cursor-pointer"
+        >
             {!isLoaded && 
                 <div className="absolute inset-0 bg-gray-400 animate-pulse h-full" />
             }
@@ -41,6 +53,6 @@ export default function PhotoItem({
                 onError={() => setLoadedThumbnailUrl(null)}
                 className="w-full h-full object-cover"
             />
-        </div>
+        </button>
     )
 }

@@ -6,7 +6,7 @@ func DefaultVariantSpecs() []VariantSpec {
 			Name:          "gallery",
 			Width:         320,
 			Height:        320,
-			Fit:           FitCover,
+			Fit:           FitContain,
 			Format:        FormatJPEG,
 			Quality:       72,
 			StripMetadata: true,

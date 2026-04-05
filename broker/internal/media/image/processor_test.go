@@ -22,8 +22,8 @@ func TestGenerateVariantsCreatesConfiguredOutput(t *testing.T) {
 		t.Fatalf("expected processor initialization to succeed, got %v", err)
 	}
 
-	source := image.NewRGBA(image.Rect(0, 0, 1200, 800))
-	fill(source, image.Rect(0, 0, 1200, 800), color.RGBA{R: 240, G: 240, B: 240, A: 255})
+	source := image.NewRGBA(image.Rect(0, 0, 400, 200))
+	fill(source, image.Rect(0, 0, 400, 200), color.RGBA{R: 240, G: 240, B: 240, A: 255})
 
 	variants, err := processor.GenerateVariants(t.Context(), mustEncodePNG(t, source), DefaultVariantSpecs())
 	if err != nil {
@@ -48,16 +48,16 @@ func TestGenerateVariantsCreatesConfiguredOutput(t *testing.T) {
 	}
 
 	thumbImage := mustDecodeJPEG(t, variant.Bytes)
-	if thumbImage.Bounds().Dx() != DefaultVariantSpecs()[0].Width {
-		t.Fatalf("expected width %d, got %d", DefaultVariantSpecs()[0].Width, thumbImage.Bounds().Dx())
+	if thumbImage.Bounds().Dx() != 320 {
+		t.Fatalf("expected width 320, got %d", thumbImage.Bounds().Dx())
 	}
 
-	if thumbImage.Bounds().Dy() != DefaultVariantSpecs()[0].Height {
-		t.Fatalf("expected height %d, got %d", DefaultVariantSpecs()[0].Height, thumbImage.Bounds().Dy())
+	if thumbImage.Bounds().Dy() != 160 {
+		t.Fatalf("expected height 160, got %d", thumbImage.Bounds().Dy())
 	}
 }
 
-func TestGenerateVariantsCenterCropsLandscapeImages(t *testing.T) {
+func TestGenerateVariantsPreservesLandscapeAspectRatioWithoutCropping(t *testing.T) {
 	processor, err := NewProcessor()
 	if err != nil {
 		t.Fatalf("expected processor initialization to succeed, got %v", err)
@@ -74,19 +74,47 @@ func TestGenerateVariantsCenterCropsLandscapeImages(t *testing.T) {
 	}
 
 	thumbImage := mustDecodeJPEG(t, variants[0].Bytes)
-	centerColor := color.RGBAModel.Convert(thumbImage.At(DefaultVariantSpecs()[0].Width/2, DefaultVariantSpecs()[0].Height/2)).(color.RGBA)
+	if thumbImage.Bounds().Dx() != 320 || thumbImage.Bounds().Dy() != 160 {
+		t.Fatalf("expected a 320x160 thumbnail, got %dx%d", thumbImage.Bounds().Dx(), thumbImage.Bounds().Dy())
+	}
+
+	centerColor := color.RGBAModel.Convert(thumbImage.At(thumbImage.Bounds().Dx()/2, thumbImage.Bounds().Dy()/2)).(color.RGBA)
 	if centerColor.G < 170 {
-		t.Fatalf("expected center crop to preserve the middle region, got %#v", centerColor)
+		t.Fatalf("expected center of thumbnail to preserve the middle green band, got %#v", centerColor)
 	}
 
-	leftColor := color.RGBAModel.Convert(thumbImage.At(0, DefaultVariantSpecs()[0].Height/2)).(color.RGBA)
-	if leftColor.R > 120 {
-		t.Fatalf("expected left edge of thumbnail to exclude the far-left red band, got %#v", leftColor)
+	leftColor := color.RGBAModel.Convert(thumbImage.At(0, thumbImage.Bounds().Dy()/2)).(color.RGBA)
+	if leftColor.R < 170 {
+		t.Fatalf("expected left edge of thumbnail to keep the far-left red band, got %#v", leftColor)
 	}
 
-	rightColor := color.RGBAModel.Convert(thumbImage.At(DefaultVariantSpecs()[0].Width-1, DefaultVariantSpecs()[0].Height/2)).(color.RGBA)
-	if rightColor.B > 120 {
-		t.Fatalf("expected right edge of thumbnail to exclude the far-right blue band, got %#v", rightColor)
+	rightColor := color.RGBAModel.Convert(thumbImage.At(thumbImage.Bounds().Dx()-1, thumbImage.Bounds().Dy()/2)).(color.RGBA)
+	if rightColor.B < 170 {
+		t.Fatalf("expected right edge of thumbnail to keep the far-right blue band, got %#v", rightColor)
+	}
+}
+
+func TestGenerateVariantsPreservesPortraitAspectRatioWithinBounds(t *testing.T) {
+	processor, err := NewProcessor()
+	if err != nil {
+		t.Fatalf("expected processor initialization to succeed, got %v", err)
+	}
+
+	source := image.NewRGBA(image.Rect(0, 0, 200, 400))
+	fill(source, image.Rect(0, 0, 200, 400), color.RGBA{R: 240, G: 240, B: 240, A: 255})
+
+	variants, err := processor.GenerateVariants(t.Context(), mustEncodePNG(t, source), DefaultVariantSpecs())
+	if err != nil {
+		t.Fatalf("expected variant generation to succeed, got %v", err)
+	}
+
+	thumbImage := mustDecodeJPEG(t, variants[0].Bytes)
+	if thumbImage.Bounds().Dx() != 160 {
+		t.Fatalf("expected width 160, got %d", thumbImage.Bounds().Dx())
+	}
+
+	if thumbImage.Bounds().Dy() != 320 {
+		t.Fatalf("expected height 320, got %d", thumbImage.Bounds().Dy())
 	}
 }
 
