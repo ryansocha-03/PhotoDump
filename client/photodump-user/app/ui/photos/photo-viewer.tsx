@@ -11,7 +11,59 @@ export interface ViewerRect {
 
 export type PhotoViewerPhase = 'closed' | 'opening' | 'open' | 'closing-zoom' | 'closing-fade';
 
-const navigationButtonClassName = "flex h-14 w-14 items-center justify-center border border-white/40 bg-black/40 text-4xl text-white backdrop-blur-sm md:h-16 md:w-16";
+const iconButtonClassName = "flex items-center justify-center rounded-full border border-white/15 bg-white/10 text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)] ring-1 ring-black/10 backdrop-blur-md transition hover:cursor-pointer hover:bg-white/18 hover:shadow-[0_24px_70px_rgba(0,0,0,0.42)] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white/10";
+
+function CloseIcon() {
+    return (
+        <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-5 w-5 md:h-6 md:w-6"
+        >
+            <path d="M6 6L18 18" />
+            <path d="M18 6L6 18" />
+        </svg>
+    )
+}
+
+function ChevronLeftIcon() {
+    return (
+        <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-7 w-7 md:h-8 md:w-8"
+        >
+            <path d="M15 18L9 12L15 6" />
+        </svg>
+    )
+}
+
+function ChevronRightIcon() {
+    return (
+        <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-7 w-7 md:h-8 md:w-8"
+        >
+            <path d="M9 18L15 12L9 6" />
+        </svg>
+    )
+}
 
 export default function PhotoViewer({
     phase,
@@ -76,10 +128,10 @@ export default function PhotoViewer({
                     <button
                         type="button"
                         aria-label="Close photo viewer"
-                        className="absolute right-2 top-2 z-20 rounded-full border border-white/40 bg-black/40 px-4 py-2 text-2xl text-white backdrop-blur-sm hover:cursor-pointer md:right-4 md:top-4"
+                        className={`${iconButtonClassName} absolute right-2 top-2 z-20 h-11 w-11 md:right-4 md:top-4 md:h-12 md:w-12`}
                         onClick={onClose}
                     >
-                        ×
+                        <CloseIcon />
                     </button>
 
                     <div className="flex h-full w-full items-center gap-2 pt-16 md:gap-4 md:pt-20">
@@ -87,11 +139,11 @@ export default function PhotoViewer({
                             <button
                                 type="button"
                                 aria-label="Previous photo"
-                                className={`${navigationButtonClassName} ${canNavigatePrev ? 'hover:cursor-pointer' : 'cursor-not-allowed opacity-35'}`}
+                                className={`${iconButtonClassName} h-14 w-14 md:h-16 md:w-16`}
                                 onClick={onNavigatePrev}
                                 disabled={!canNavigatePrev}
                             >
-                                ‹
+                                <ChevronLeftIcon />
                             </button>
                         </div>
 
@@ -109,11 +161,11 @@ export default function PhotoViewer({
                             <button
                                 type="button"
                                 aria-label="Next photo"
-                                className={`${navigationButtonClassName} ${canNavigateNext ? 'hover:cursor-pointer' : 'cursor-not-allowed opacity-35'}`}
+                                className={`${iconButtonClassName} h-14 w-14 md:h-16 md:w-16`}
                                 onClick={onNavigateNext}
                                 disabled={!canNavigateNext}
                             >
-                                ›
+                                <ChevronRightIcon />
                             </button>
                         </div>
                     </div>
