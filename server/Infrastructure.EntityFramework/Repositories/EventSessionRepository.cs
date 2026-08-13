@@ -1,58 +1,81 @@
+using Domain.Entities;
 using Infrastructure.EntityFramework.Contexts;
-using Infrastructure.EntityFramework.Models;
-using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Persistence.Abstractions.Interfaces.Repositories;
 
 namespace Infrastructure.EntityFramework.Repositories;
 
+/// <summary>
+/// Repository implementation for interactions with <see cref="EventSession"/> entities using EF Core.
+/// </summary>
 public class EventSessionRepository(AppDbContext context): IEventSessionRepository 
 {
-    public async Task<EventSession?> ValidateSessionAsync(Guid sessionId, Guid eventId)
-    {
-        return await context.EventSessions
-            .Where(es => es.Id == sessionId
-                && es.EventPublicId == eventId
-                && es.RevokedAt == null
-                && es.ExpiresAt > DateTimeOffset.UtcNow)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task<EventSession> RevokeSessionAsync(EventSession session)
-    {
-        session.RevokedAt = DateTimeOffset.UtcNow;
-        await UpdateAsync(session);
-        return session;
-    }
-
+    /// <inheritdoc /> 
     public async Task<EventSession?> GetAsync(Guid id)
     {
         return await context.EventSessions.FindAsync(id);
     }
-
-    public async Task<EventSession> CreateAsync(EventSession newSession)
+    
+    /// <inheritdoc />
+    public async Task<EventSession?> GetValidAsync(Guid sessionId, Guid eventId)
     {
-        await context.EventSessions.AddAsync(newSession);
+        return await context.EventSessions
+            .Where(es => es.Id == sessionId 
+                && es.EventPublicId == eventId
+                && es.RevokedAt == null
+                && es.ExpiresAt > DateTime.UtcNow)
+            .FirstOrDefaultAsync();
+    }
+    
+    /// <inheritdoc />
+    public async Task<EventSession> CreateAsync(EventSession eventSession)
+    {
+        var resolvedEventSession = await context.EventSessions.AddAsync(eventSession);
         await context.SaveChangesAsync();
-        return newSession;
+        return resolvedEventSession.Entity;
+    }
+    
+    /// <inheritdoc />
+    public async Task<EventSession?> UpdateAsync(EventSession eventSession)
+    {
+        var rowsUpdated = await context.EventSessions
+            .Where(es => es.Id == eventSession.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(es => es.ExpiresAt, eventSession.ExpiresAt)
+                .SetProperty(es => es.LastSeenAt, eventSession.LastSeenAt)
+                .SetProperty(es => es.UserAgent, eventSession.UserAgent)
+                .SetProperty(es => es.IpAddress, eventSession.IpAddress));
+        
+        return rowsUpdated == 0 ? null : eventSession;
+    }
+    
+    /// <inheritdoc />
+    public async Task<EventSession?> RevokeAsync(EventSession session)
+    {
+        var rowsUpdated = await context.EventSessions
+            .Where(es => es.Id == session.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(es => es.RevokedAt, DateTimeOffset.UtcNow));
+        
+        return rowsUpdated == 0 ? null : session;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    /// <inheritdoc />
+    public async Task<bool> DeleteAsync(Guid sessionId)
     {
-        var session = await GetAsync(id);
-        if (session == null)
-            return false;
-        context.EventSessions.Remove(session);
-        await context.SaveChangesAsync();
-        return true;
+        var rowsDeleted = await context.EventSessions
+            .Where(es => es.Id == sessionId)
+            .ExecuteDeleteAsync();
+
+        return rowsDeleted != 0;
     }
 
-    public async Task<EventSession?> UpdateAsync(EventSession updatedSession)
+    /// <inheritdoc />
+    public async Task<int> DeleteInvalidAsync()
     {
-        var session = await GetAsync(updatedSession.Id);
-        if (session == null)
-            return null;
-        context.Entry(session).CurrentValues.SetValues(updatedSession);
-        await context.SaveChangesAsync();
-        return session;
+        return await context.EventSessions
+            .Where(es => es.RevokedAt != null
+                || es.ExpiresAt <  DateTime.UtcNow)
+            .ExecuteDeleteAsync();
     }
 }

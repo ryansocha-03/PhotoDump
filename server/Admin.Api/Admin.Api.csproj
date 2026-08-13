@@ -19,9 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Identity\Identity.csproj" />
       <ProjectReference Include="..\Infrastructure.EntityFramework\Infrastructure.EntityFramework.csproj" />
-      <ProjectReference Include="..\Core\Core.csproj" />
     </ItemGroup>
 
 </Project>

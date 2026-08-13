@@ -1,161 +1,156 @@
-using ContentStore.MinIO.Wrappers;
-using Core.Configuration.ConfigurationModels;
-using Core.Configuration.DTOs;
-using Core.DTOs;
-using Core.Interfaces;
-using Core.Models;
+using System.Collections.Immutable;
+using ContentStore.Abstractions.Models;
+using ContentStore.MinIO.Models.Configuration;
 using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
+using ContentStore.Abstractions.Interfaces;
+using ContentStore.Abstractions.Models.Configuration;
+using Domain.Enums;
+using Domain.Extensions;
 using Minio.Exceptions;
 
 namespace ContentStore.MinIO.Services;
 
-public class MinioService(
-    IExternalS3Client externalS3Client,
-    IInternalS3Client internalS3Client,
-    IOptions<ContentStoreConfigurationModel> options)
-    : IContentStoreService
+/// <summary>
+/// Service implementation of a <see cref="IContentStoreService"/> using MinIO
+/// </summary>
+public class MinioService(IOptions<MinIoConfiguration> minIoOptions, IOptions<ContentStoreConfiguration> contentStoreOptions) : IContentStoreService 
 {
-    private readonly IMinioClient _externalS3Client = externalS3Client.MinioClient;
-    private readonly IMinioClient _internalS3Client = internalS3Client.MinioClient;
-    private readonly ContentStoreConfigurationModel _contentStoreConfiguration = options.Value;
+    private readonly MinIoConfiguration _minIoConfiguration = minIoOptions.Value;
+    private readonly ContentStoreConfiguration _contentStoreConfiguration = contentStoreOptions.Value;
+    
+    private readonly IMinioClient _externalS3Client = new MinioClient()
+        .WithEndpoint(minIoOptions.Value.ExternalEndpoint)
+        .WithRegion(minIoOptions.Value.Region)
+        .WithCredentials(minIoOptions.Value.AccessKey, minIoOptions.Value.SecretKey)
+        .WithSSL(minIoOptions.Value.UseSsl)
+        .Build();
+    
+    private readonly IMinioClient _internalS3Client = new MinioClient()
+        .WithEndpoint(minIoOptions.Value.InternalEndpoint)
+        .WithRegion(minIoOptions.Value.Region)
+        .WithCredentials(minIoOptions.Value.AccessKey, minIoOptions.Value.SecretKey)
+        .WithSSL(minIoOptions.Value.UseSsl)
+        .Build();
 
-    public async Task<List<StorageBucketDto>> ListBuckets()
+    /// <inheritdoc/> 
+    public async Task<IReadOnlyCollection<StorageBucket>> ListBucketsAsync()
     {
-        var buckets = await _internalS3Client.ListBucketsAsync();
-        List<StorageBucketDto> bucketDtos = [];
-        bucketDtos.AddRange(buckets.Buckets.Select(bucket => new StorageBucketDto()
-        {
-            BucketName = bucket.Name, 
-            BucketCreationDate = DateTime.Parse(bucket.CreationDate)
-        }));
-        return bucketDtos;
+        return (await _internalS3Client.ListBucketsAsync())
+            .Buckets
+            .Select(bucket => new StorageBucket(bucket.Name, bucket.CreationDateDateTime))
+            .ToImmutableList();
     }
 
-    public async Task<IEnumerable<string>> GenerateBulkPresignedUploadUrls(IEnumerable<string> fileNames,
-        Guid eventId, FilePrivacyEnum privacy)
+    /// <inheritdoc /> 
+    public async Task<IReadOnlyCollection<string>> CreateUploadsAsync(ContentKeyGroup objects)
     {
-        List<string> urls = []; 
-
         var args = new PresignedPutObjectArgs()
-            .WithBucket(_contentStoreConfiguration.Bucket)
-            .WithExpiry(_contentStoreConfiguration.PresignedUploadDurationMinutes * 60);
-        
-        foreach (var fileName in fileNames)
+            .WithBucket(_minIoConfiguration.Bucket)
+            .WithExpiry(_contentStoreConfiguration.UploadWindowMinutes * 60);
+
+        var urls = new List<string>();
+        foreach (var file in objects.ObjectNames)
         {
-            args.WithObject(BuildObjectName(eventId, privacy, fileName));
+            args.WithObject(GetObjectLocation(new ContentKey(objects.OwnerId, objects.Privacy, objects.ContentVariant, file)));
             urls.Add(await _externalS3Client.PresignedPutObjectAsync(args));
         }
 
-        return urls;
+        return urls.ToImmutableList();
     }
-    
-    public async Task<IEnumerable<string>> GenerateBulkPresignedDownloadUrls(IEnumerable<MediaNameDto> fileNames, Guid eventId, FilePrivacyEnum privacy, string suffix = "")
-    {
-        List<string> urls = [];
-        
-        var args = new PresignedGetObjectArgs()
-            .WithBucket(_contentStoreConfiguration.Bucket)
-            .WithExpiry(_contentStoreConfiguration.PresignedDownloadDurationMinutes * 60);
 
-        foreach (var fileName in fileNames)
+    /// <inheritdoc /> 
+    public async Task<IReadOnlyCollection<string>> CreateDownloadsAsync(ContentKeyGroup objects)
+    {
+        var args = new PresignedGetObjectArgs()
+            .WithBucket(_minIoConfiguration.Bucket)
+            .WithExpiry(_contentStoreConfiguration.DownloadWindowMinutes * 60);
+        
+        var urls = new List<string>();
+        foreach (var file in objects.ObjectNames)
         {
-            args
-                .WithObject(BuildObjectName(eventId, privacy, fileName.PublicFileName, suffix))
+            args.WithObject(GetObjectLocation(new ContentKey(objects.OwnerId, objects.Privacy, objects.ContentVariant, file)))
                 .WithHeaders(new Dictionary<string, string>
                 {
-                    {"Content-Disposition", $"attachment; filename=\"{fileName.FileName}\""}
+                    { "Content-Disposition", $"attachment; filename=\"{file}\"" }
                 });
-            urls.Add(await _externalS3Client.PresignedGetObjectAsync(args));
+            urls.Add(await _internalS3Client.PresignedGetObjectAsync(args));
         }
         
-        return urls;
+        return urls.ToImmutableList();
     }
 
-    public async Task<string?> GeneratePresignedDownloadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName)
-    {
-        try
-        {
-            var args = new PresignedGetObjectArgs()
-                .WithBucket(_contentStoreConfiguration.Bucket)
-                .WithObject(BuildObjectName(eventId, privacy, fileName))
-                .WithExpiry(_contentStoreConfiguration.PresignedDownloadDurationMinutes * 60);
-
-            var url = await _externalS3Client.PresignedGetObjectAsync(args);
-            return url;
-        }
-        catch (MinioException)
-        {
-            return null;
-        }
-    }
-
-    public async Task<string?> GeneratePresignedUploadUrl(Guid eventId, FilePrivacyEnum privacy, string fileName)
-    {
-        try
-        {
-            var args = new PresignedPutObjectArgs()
-                .WithBucket(_contentStoreConfiguration.Bucket)
-                .WithObject(BuildObjectName(eventId, privacy, fileName))
-                .WithExpiry(_contentStoreConfiguration.PresignedUploadDurationMinutes * 60);
-
-            return await _externalS3Client.PresignedPutObjectAsync(args);
-        }
-        catch (MinioException)
-        {
-            return null;
-        }
-    }
-
-    public async Task<bool> DeleteMediaFromEvent(Guid eventId, FilePrivacyEnum privacy, string fileName)
+    /// <inheritdoc />
+    public async Task<bool> DeleteContentAsync(ContentKeyGroup objects)
     {
         var args = new RemoveObjectArgs()
-            .WithBucket(_contentStoreConfiguration.Bucket)
-            .WithObject(BuildObjectName(eventId, privacy, fileName));
+            .WithBucket(_minIoConfiguration.Bucket);
 
-        try
+        foreach (var content in objects.ObjectNames)
         {
-            await _internalS3Client.RemoveObjectAsync(args);
-        }
-        catch
-        {
-            return false;
+            args.WithObject(GetObjectLocation(new ContentKey(objects.OwnerId, objects.Privacy, objects.ContentVariant, content)));
+            try
+            {
+                await _internalS3Client.RemoveObjectAsync(args);
+            }
+            catch (InvalidObjectNameException)
+            {
+                return false;
+            }
         }
 
         return true;
     }
 
-    public string BuildObjectName(Guid eventPublicId, FilePrivacyEnum privacy, string fileName, string suffix = "")
-    {
-        return $"{eventPublicId}/{privacy.ToString().ToLower()}/{fileName}{suffix.Trim()}";
-    }
-
-    public async Task DeleteObjectFromBucket(string objectName)
+    /// <inheritdoc />
+    public async Task<bool> DeleteContentExactAsync(string objectName)
     {
         var args = new RemoveObjectArgs()
-            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithBucket(_minIoConfiguration.Bucket)
             .WithObject(objectName);
-        
-        await _internalS3Client.RemoveObjectAsync(args);
+
+        try
+        {
+            await _internalS3Client.RemoveObjectAsync(args);
+        }
+        catch (InvalidObjectNameException)
+        {
+            return false;
+        }
+        return true;
     }
 
-    public async Task<List<string>> ListObjectsInBucket(Guid eventId)
+    /// <inheritdoc />
+    public string GetObjectLocation(ContentKey objectKey)
+    {
+        var suffix = objectKey.ContentVariant switch
+        {
+            ContentVariantEnum.Gallery => "/gallery",
+            ContentVariantEnum.Spotlight => "/spotlight",
+            ContentVariantEnum.Original => " /original",
+            _ => throw new ArgumentOutOfRangeException(nameof(objectKey.ContentVariant), objectKey.ContentVariant, null)
+        };
+
+        return $"{objectKey.OwnerId}/{objectKey.Privacy.ToMemberValue().ToLower()}/{objectKey.ObjectName}{suffix}";
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<string>> GetContentNamesAsync(string location)
     {
         var args = new ListObjectsArgs()
-            .WithBucket(_contentStoreConfiguration.Bucket)
+            .WithBucket(_minIoConfiguration.Bucket)
             .WithRecursive(true)
-            .WithPrefix(eventId.ToString());
+            .WithPrefix(location);
 
         var objects = _internalS3Client.ListObjectsEnumAsync(args);
-        
-        var items = new List<string>();
+
+        var contentNames = new List<string>();
         await foreach (var obj in objects)
         {
-            items.Add(obj.Key);
-            if (items.Count > 10) break;
+            contentNames.Add(obj.Key);
         }
-
-        return items;
+        
+        return contentNames.ToImmutableList();
     }
 }

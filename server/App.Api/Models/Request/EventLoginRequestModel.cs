@@ -1,6 +1,9 @@
 namespace App.Api.Models.Request;
 
-public class EventLoginRequestModel
+/// <summary>
+/// Request model outlining fields for logging into an event.
+/// </summary>
+public record EventLoginRequestModel
 {
-    public string EventKey { get; set; } = string.Empty;
+    public required string EventKey { get; init; } 
 }

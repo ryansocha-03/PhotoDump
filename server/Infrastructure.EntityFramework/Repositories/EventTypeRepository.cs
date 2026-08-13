@@ -1,48 +1,53 @@
+using Domain.Entities;
 using Infrastructure.EntityFramework.Contexts;
-using Infrastructure.EntityFramework.Models;
-using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Persistence.Abstractions.Interfaces.Repositories;
 
 namespace Infrastructure.EntityFramework.Repositories;
 
-public class EventTypeRepository(AppDbContext context) : IRepository<EventType>
+/// <summary>
+/// Repository implementation was interacting with <see cref="EventType"/> entities using EF Core.
+/// </summary>
+public class EventTypeRepository(AppDbContext context) : IEventTypeRepository
 {
-    public async Task<EventType?> GetAsync(int id)
-    {
-        return await context.EventTypes.FindAsync(id);
-    }
-
-    public async Task<IEnumerable<EventType>> GetAllAsync()
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<EventType>> GetAllAsync()
     {
         return await context.EventTypes.ToListAsync();
     }
 
-    public async Task<EventType> AddAsync(EventType entity)
+    /// <inheritdoc />
+    public async Task<EventType?> GetByIdAsync(long id)
     {
-        await context.EventTypes.AddAsync(entity);
-        await context.SaveChangesAsync();
-        return entity;
+        return await context.EventTypes.FindAsync(id);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    /// <inheritdoc />
+    public async Task<EventType> CreateAsync(EventType newEventType)
     {
-        var entityToDelete = await context.EventTypes.FindAsync(id);
-        if (entityToDelete is null)
-            return false;
-        
-        context.EventTypes.Remove(entityToDelete);
+        var resolvedEntity = await context.EventTypes.AddAsync(newEventType);
         await context.SaveChangesAsync();
-        return true;
+        return resolvedEntity.Entity;
     }
 
-    public async Task<EventType?> UpdateAsync(EventType entity)
+    /// <inheritdoc />
+    public async Task<EventType?> UpdateAsync(EventType updatedEvent)
     {
-        var entityToUpdate = await context.EventTypes.FindAsync(entity.Id);
-        if (entityToUpdate is null)
-            return null;    
+        var updatedRows = await context.EventTypes
+            .Where(et => et.Id == updatedEvent.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(et => et.TypeName, updatedEvent.TypeName));
         
-        context.Entry(entityToUpdate).CurrentValues.SetValues(entity);
-        await context.SaveChangesAsync();
-        return entityToUpdate;
+        return updatedRows == 0 ? null : updatedEvent;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteAsync(long id)
+    {
+        var deletedRows = await context.EventTypes
+            .Where(et => et.Id == id)
+            .ExecuteDeleteAsync();
+        
+        return deletedRows != 0;
     }
 }

@@ -1,30 +1,35 @@
-using Infrastructure.EntityFramework.Models;
+using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.EntityFramework.Configurations;
 
+/// <summary>
+/// EF core entity configurations for Event entities.
+/// </summary>
 public class EventEntityTypeConfiguration :  IEntityTypeConfiguration<Event>
 {
     public void Configure(EntityTypeBuilder<Event> builder)
     {
         builder
-            .Property(e => e.EventName)
-            .IsRequired();
-
-        builder
-            .Property(e => e.EventNameShort)
-            .HasMaxLength(25);
-
-        builder
             .Property(e => e.PublicId)
+            .IsRequired()
             .HasDefaultValueSql("gen_random_uuid()")
             .ValueGeneratedOnAdd();
         
         builder
             .HasIndex(e => e.PublicId)
             .IsUnique();
+
+        builder
+            .Property(e => e.EventName)
+            .IsRequired();
         
+        builder
+            .Property(e => e.EventNameShort)
+            .HasMaxLength(25);
+
         builder
             .Property(e => e.ColorPrimary)
             .HasMaxLength(7);
@@ -32,9 +37,13 @@ public class EventEntityTypeConfiguration :  IEntityTypeConfiguration<Event>
         builder
             .Property(e => e.ColorSecondary)
             .HasMaxLength(7);
+        
+        builder
+            .Property(e => e.StartDate)
+            .IsRequired();
 
         builder
-            .Property(e => e.EventDate)
+            .Property(e => e.EndDate)
             .IsRequired();
         
         builder
@@ -42,25 +51,14 @@ public class EventEntityTypeConfiguration :  IEntityTypeConfiguration<Event>
             .IsRequired();
 
         builder
-            .HasOne(e => e.EventState)
-            .WithMany(es => es.Events)
-            .HasForeignKey(e => e.EventStateId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .Property(e => e.EventState)
+            .IsRequired()
+            .HasDefaultValue(EventStateEnum.Draft);
         
         builder
             .HasOne(e => e.EventType)
             .WithMany(et => et.Events)
             .HasForeignKey(e => e.EventTypeId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder
-            .HasMany(e => e.Guests)
-            .WithOne(g => g.Event)
-            .HasForeignKey(g => g.EventId);
-        
-        builder
-            .HasMany(e => e.Admins)
-            .WithOne(a => a.Event)
-            .HasForeignKey(a => a.EventId);
     }
 }

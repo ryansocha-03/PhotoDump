@@ -15,14 +15,14 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.1" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Broker.RabbitMQ\Broker.RabbitMQ.csproj" />
       <ProjectReference Include="..\ContentStore.MinIO\ContentStore.MinIO.csproj" />
       <ProjectReference Include="..\Infrastructure.EntityFramework\Infrastructure.EntityFramework.csproj" />
-      <ProjectReference Include="..\Core\Core.csproj" />
-      <ProjectReference Include="..\Identity\Identity.csproj" />
     </ItemGroup>
 
     <ItemGroup>

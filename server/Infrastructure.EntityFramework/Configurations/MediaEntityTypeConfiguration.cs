@@ -1,10 +1,13 @@
-using Core.Models;
-using Infrastructure.EntityFramework.Models;
+using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.EntityFramework.Configurations;
 
+/// <summary>
+/// EF Core entity configurations for Media entities.
+/// </summary>
 public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
 {
     public void Configure(EntityTypeBuilder<Media> builder)
@@ -25,7 +28,12 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
         builder
             .Property(m => m.Status)
             .IsRequired()
-            .HasDefaultValue(UploadStatus.Pending);
+            .HasDefaultValue(ContentStatusEnum.Pending);
+        
+        builder
+            .Property(m => m.UploadAttempts)
+            .IsRequired()
+            .HasDefaultValue(0);
 
         builder
             .Property(m => m.DownloadCount)
@@ -36,12 +44,11 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
             .Property(m => m.IsPrivate)
             .HasDefaultValue(true)
             .IsRequired();
-        
+
         builder
-            .HasOne(m => m.MediaType)
-            .WithMany(mt => mt.Media)
-            .HasForeignKey(m => m.MediaTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .Property(m => m.ContentType)
+            .IsRequired()
+            .HasDefaultValue(ContentTypeEnum.None);
         
         builder
             .HasOne(m => m.Event)

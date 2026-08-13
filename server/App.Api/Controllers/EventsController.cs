@@ -1,33 +1,46 @@
+using App.Api.Constants;
 using App.Api.Models.Response;
-using App.Api.Services;
-using Identity.Services.Sessions;
-using Microsoft.AspNetCore.Authorization;
+using App.Api.Services.Definition;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Controllers;
 
+/// <summary>
+/// Provides endpoints related to events.
+/// </summary>
 [ApiController]
-[Route("[controller]")]
-public class EventsController(EventService eventService): ControllerBase
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/[controller]")]
+public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
 {
-    [HttpGet("landing")]
-    public async Task<ActionResult<EventLandingResponseModel>> GetEventLandingInfo(
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicId)
+    /// <summary>
+    /// Gets overview information for the provided event.
+    /// </summary>
+    [HttpGet]
+    [ActionName("GetEventOverviewInfo")]
+    [ProducesResponseType(typeof(EventOverviewResponseModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetEventOverviewInfo(
+        [FromHeader(Name = SessionAuthHeaders.EventHeader)] Guid eventPublicId)
     {
-        var eventLandingData = await eventService.FetchLandingDetailsAsync(eventPublicId);
-        if (eventLandingData is null) return NotFound($"No event with public id {eventPublicId}");
-        
-        return Ok(eventLandingData);
-    }
-    
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpGet("guests")]
-    public async Task<IActionResult> GuestListSearch( 
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
-        [FromQuery] string guestName)
-    {
-        if (string.IsNullOrWhiteSpace(guestName) || guestName.Length < 3) return BadRequest("Guest name must be provided and at least 3 characters");
-        
-        return Ok(await eventService.FetchGuestSearchAsync(eventPublicIdHeader, guestName));
+        if (eventPublicId == Guid.Empty)
+            return BadRequest("Event Id cannot be empty");
+
+        try
+        {
+            var eventLandingData = await eventService.GetEventOverviewAsync(eventPublicId);
+            if (eventLandingData is null) return NotFound($"Event {eventPublicId} not found");
+
+            return Ok(eventLandingData);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Exception when getting event overview details for event {eventPublicId}", ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occured.");
+        }
+
     }
 }

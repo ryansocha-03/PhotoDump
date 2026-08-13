@@ -1,73 +1,68 @@
 using Infrastructure.EntityFramework.Contexts;
-using Infrastructure.EntityFramework.Models;
-using Infrastructure.EntityFramework.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Persistence.Abstractions.Interfaces.Repositories;
+using Domain.Entities;
 
 namespace Infrastructure.EntityFramework.Repositories;
 
-public class EventRepository(AppDbContext context): IEventRepository 
+/// <summary>
+/// Repository implementation for database interactions with <see cref="Event"/> entities via EF Core.
+/// </summary>
+public class EventRepository(AppDbContext context): IEventRepository
 {
+    /// <inheritdoc />
+    public async Task<Event?> GetByIdAsync(long id)
+    {
+        return await context.Events.FindAsync(id);
+    }
+
+    /// <inheritdoc />
     public async Task<Event?> GetByPublicIdAsync(Guid publicId)
     {
         return await context.Events.FirstOrDefaultAsync(e => e.PublicId == publicId);
     }
 
-    public async Task<IEnumerable<Guest>> GetGuestListForEventAsync(int eventId)
-    {
-        return await context.Guests.Where(g => g.EventId == eventId).ToListAsync();
-    }
-
-    public async Task<IEnumerable<Guest>> GuestListSearchAsync(int eventId, string search)
-    {
-        return await context.Guests
-            .Where(g => g.EventId == eventId &&
-               EF.Functions.ILike(g.FullName, $"%{search}%"))
-            .Take(20)
-            .ToListAsync();
-    }
-
-    public async Task<int?> GetEventIdByPublicIdAsync(Guid publicId)
-    {
-        return await context.Events
-            .Where(e => e.PublicId == publicId)
-            .Select(e => (int?)e.Id)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task<Event?> GetAsync(int id)
-    {
-        return await context.Events.FindAsync(id);
-    }
-
-    public async Task<IEnumerable<Event>> GetAllAsync()
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<Event>> GetAllAsync()
     {
         return await context.Events.ToListAsync();
     }
 
-    public async Task<Event> AddAsync(Event entity)
+    /// <inheritdoc />
+    public async Task<Event> CreateAsync(Event newEvent)
     {
-        await context.Events.AddAsync(entity);
+        var resolvedEvent = await context.Events.AddAsync(newEvent);
         await context.SaveChangesAsync();
-        return entity;
+        return resolvedEvent.Entity;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    /// <inheritdoc />
+    public async Task<bool> DeleteAsync(long id)
     {
-        var eventToDelete = await context.Events.FindAsync(id);
-        if (eventToDelete is null)
-            return false;
-        context.Events.Remove(eventToDelete);
-        await context.SaveChangesAsync();
-        return true;
+        var rowsUpdated = await context.Events
+            .Where(e => e.Id == id)
+            .ExecuteDeleteAsync();
+        
+        return rowsUpdated != 0;
     }
 
+    /// <inheritdoc />
     public async Task<Event?> UpdateAsync(Event entity)
     {
-        var eventToUpdate = await context.Events.FindAsync(entity.Id);
-        if (eventToUpdate is null)
-            return null;
-        context.Entry(eventToUpdate).CurrentValues.SetValues(entity);
-        await context.SaveChangesAsync();
-        return entity;
+        var rowsUpdated = await context.Events
+            .Where(e => e.Id == entity.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(e => e.PublicId, entity.PublicId)
+                .SetProperty(e => e.EventName, entity.EventName)
+                .SetProperty(e => e.EventNameShort, entity.EventNameShort)
+                .SetProperty(e => e.ColorPrimary, entity.ColorPrimary)
+                .SetProperty(e => e.ColorSecondary, entity.ColorSecondary)
+                .SetProperty(e => e.StartDate, entity.StartDate)
+                .SetProperty(e => e.EndDate, entity.EndDate)
+                .SetProperty(e => e.EventPasswordHash, entity.EventPasswordHash)
+                .SetProperty(e => e.EventState, entity.EventState)
+                .SetProperty(e => e.EventTypeId, entity.EventTypeId));
+        
+        return rowsUpdated == 0 ? null : entity;
     }
 }

@@ -1,73 +1,92 @@
+using App.Api.Constants;
+using App.Api.Models.DTOs;
 using App.Api.Models.Request;
 using App.Api.Models.Response;
-using App.Api.Services;
-using App.Api.Services.DTOs;
-using Core.DTOs;
-using Core.Interfaces;
-using Core.Models;
-using Identity.Services.Sessions;
-using Infrastructure.EntityFramework.Models.DTOs;
+using App.Api.Services.Definition;
+using Asp.Versioning;
+using ContentStore.Abstractions.Interfaces;
+using ContentStore.Abstractions.Models;
+using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Controllers;
 
+/// <summary>
+/// Provides endpoints for media operations.
+/// </summary>
 [ApiController]
-[Route("[controller]")]
-public class MediaController(IContentStoreService contentStoreService, MediaService mediaService, EventService eventService, IBrokerPublisher publisher) : ControllerBase
+[ApiVersion("1.0")]
+[Authorize(AuthenticationSchemes = AuthSchemes.SessionAuth)]
+[Route("v{version:apiVersion}/[controller]")]
+public class MediaController(
+    IContentStoreService contentStoreService, 
+    IMediaService mediaService, 
+    IEventService eventService, 
+    ILogger<MediaController> logger,
+    IBrokerPublisher publisher) : ControllerBase
 {
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    
+    /// <summary>
+    /// Gets a paginated list of public media presigned download URLs based off the provided paging parameters.
+    /// </summary>
     [HttpGet("download")]
+    [ActionName("GetEventPublicMediaDownload")]
+    [ProducesResponseType(typeof(PaginationDto<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetEventPublicMediaDownload(
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
+        [FromHeader(Name = SessionAuthHeaders.EventHeader)] Guid eventPublicIdHeader,
         [FromQuery] string? cursor,
         [FromQuery] int? limit)
     {
-        var eventId = await eventService.GetEventIdByPublicId(eventPublicIdHeader);
-        if (eventId is not { } resolvedEventId)
-            return NotFound("No event found.");
+        var eventId = await eventService.GetEventInternalIdAsync(eventPublicIdHeader);
+        
+        if (eventId == 0)
+            return NotFound("Event not found.");
 
-        PaginationDto<MediaNameDto> mediaPageData;
+        PaginationDto<string> mediaPageData;
         try
         {
-            mediaPageData = await mediaService.GetPublicMediaPageAsync(resolvedEventId, eventPublicIdHeader, cursor, limit);
+            mediaPageData = await mediaService.GetEventPublicMediaPagedAsync(eventId, eventPublicIdHeader, cursor, limit);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex);
+            logger.LogError(ex, "Error getting event media");
             return StatusCode(500, "Unexpected error when getting media.");
         }
 
-        if (mediaPageData.Items.Count == 0)
-            return Ok(mediaPageData);
+        if (!mediaPageData.Items.Any())
+            return Ok(new PaginationDto<string>());
 
         IEnumerable<string> urls;
         try
         {
-            urls = await contentStoreService.GenerateBulkPresignedDownloadUrls(
-                mediaPageData.Items,
-                eventPublicIdHeader,
-                FilePrivacyEnum.Public,
-                "_gallery");
+            urls = await contentStoreService.CreateDownloadsAsync(
+                new ContentKeyGroup(
+                    eventPublicIdHeader, 
+                    FilePrivacyEnum.Public, 
+                    ContentVariantEnum.Gallery, 
+                    mediaPageData.Items));
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex);
+            logger.LogError(ex, "Error creating download URLs.");
             return StatusCode(500, "Unexpected error when generating downloads.");
         }
         
         return Ok(new PaginationDto<string>
         {
-            Items = urls.ToList(),
+            Items = urls,
             HasNext = mediaPageData.HasNext,
             NextCursor = mediaPageData.NextCursor
         });
     }
     
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
     [HttpPost("upload")]
     public async Task<IActionResult> UploadMediaForEvent( 
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader,
+        [FromHeader(Name = SessionAuthHeaders.EventHeader)] Guid eventPublicIdHeader,
         [FromBody] MediaUploadRequestModel mediaUploadData)
     {
         if (mediaUploadData.MediaUploadInfo.Count == 0)
@@ -146,54 +165,6 @@ public class MediaController(IContentStoreService contentStoreService, MediaServ
             ),
             MediaId = uploadedMedia.MediaInternalId
         });
-
-        return Ok();
-    }
-
-    [HttpGet("buckets")]
-    public async Task<IActionResult> ListBuckets()
-    {
-        var buckets = await contentStoreService.ListBuckets();
-        return Ok(buckets);
-    }
-
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
-    [HttpGet("buckets/list")]
-    public async Task<IActionResult> ListObjects(
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
-    {
-        var items = await contentStoreService.ListObjectsInBucket(eventPublicIdHeader);
-        
-        return Ok(items);
-    } 
-    
-    [HttpGet("list/{eventId}")]
-    public IActionResult ListMediaForEvent([FromRoute] int eventId)
-    {
-        return Ok(mediaService.GetAllMediaForEvent(eventId));
-    }
-
-    [HttpGet("delete/{mediaId}")]
-    public async Task<IActionResult> DeleteMediaFromEvent([FromRoute] int mediaId,
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
-    {  
-        var media = await mediaService.GetSpecificMedia(mediaId);
-        if (media is null)
-            return NotFound("No media found.");
-        
-        await mediaService.DeleteMedia(mediaId);
-        await contentStoreService.DeleteMediaFromEvent(
-            eventPublicIdHeader, 
-            media.IsPrivate ?  FilePrivacyEnum.Private : FilePrivacyEnum.Public,
-            media.PublicFileName);
-
-        return Ok();
-    }
-
-    [HttpDelete]
-    public async Task<IActionResult> DeleteObjectFromBucket([FromQuery] string objectName)
-    {
-        await contentStoreService.DeleteObjectFromBucket(objectName);
 
         return Ok();
     }

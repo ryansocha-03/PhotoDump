@@ -1,20 +1,17 @@
-﻿using App.Api.Services;
-using ContentStore.MinIO.Utilities;
-using Core.Configuration.Utilities;
-using Identity;
-using Infrastructure.EntityFramework.Utilities;
+﻿using App.Api.Extensions;
+using Broker.RabbitMQ.Extensions;
+using ContentStore.MinIO.Extensions;
+using Infrastructure.EntityFramework.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service configurations
-builder.Services.AddDatabaseConfiguration(builder.Configuration);
-builder.Services.AddContentStoreConfiguration(builder.Configuration);
-builder.Services.AddBrokerClientConfiguration(builder.Configuration);
+// Add core services.
+builder.Services.AddEfCoreDatabase(builder.Configuration);
+builder.Services.AddMinIoContentStore(builder.Configuration);
+builder.Services.AddRabbitMqBroker(builder.Configuration);
 
 // Register actual services
-builder.Services.AddDatabaseRepositories();
-builder.Services.AddMinIoServices(builder.Configuration, builder.Environment.EnvironmentName);
-builder.Services.AddIdentityServices();
+builder.AddDataProtectionServices();
 builder.Services.AddApiServices();
 
 builder.Services.AddSessionAuth(builder.Configuration);

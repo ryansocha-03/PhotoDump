@@ -1,9 +1,8 @@
 using App.Api.Models;
+using App.Api.Models.DTOs;
 using App.Api.Models.Request;
-using App.Api.Services.DTOs;
 using ContentStore.MinIO.Utilities;
 using Core.DTOs;
-using Core.Models;
 using Infrastructure.EntityFramework.Models;
 using Infrastructure.EntityFramework.Models.DTOs;
 using Infrastructure.EntityFramework.Repositories.Interfaces;
