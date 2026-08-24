@@ -1,25 +1,52 @@
-using App.Api.Services;
+using App.Api.Constants;
+using App.Api.Models.DTOs;
+using App.Api.Services.Definition;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Api.Controllers.Internal;
 
+/// <summary>
+/// Provides internal endpoints for interacting with media.
+/// </summary>
 [ApiController]
-[Route("internal/media")]
-[Authorize(AuthenticationSchemes = "WorkerScheme")]
-public class InternalMediaController(MediaService mediaService): ControllerBase
+[ApiVersion("1.0")]
+[Route("v{version:apiVersion}/media")]
+[Authorize(AuthenticationSchemes = AuthSchemes.WorkerAuth)]
+public class InternalMediaController(IMediaService mediaService, ILogger<InternalMediaController> logger): ControllerBase
 {
-    [HttpPost("{mediaId:int}/complete")]
-    public async Task<IActionResult> CompleteMediaProcessing([FromRoute] int mediaId)
+    /// <summary>
+    /// Acknowledges the completion of the media processing pipeline for a particular media and makes it available for users. 
+    /// </summary>
+    [HttpPost("{mediaId:long}/complete")]
+    [ActionName("CompleteMediaProcessing")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CompleteMediaProcessing([FromRoute] long mediaId)
     {
-        var updatedMedia = await mediaService.AcknowledgeCompleteStateTransition(mediaId);
-
-        // TODO: Add better handling for 0 or 2+ rows updated
-        return updatedMedia.Count switch
+        MediaStateTransitionDto? updatedMedia;
+        try
         {
-            0 => NoContent(),
-            1 => Ok(),
-            _ => Ok("Multiple shis updated?")
-        };
+            updatedMedia = await mediaService.AcknowledgeMediaProcessingCompletionAsync(mediaId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex.Message, "Invalid number of media updated.");
+            return BadRequest("Invalid number of media updated");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error occurred.");
+            return StatusCode(StatusCodes.Status500InternalServerError, "Unexpected error occurred");
+        }
+
+        if (updatedMedia == null)
+        {
+            return BadRequest("Invalid media id");
+        }
+
+        return Ok();
     }
 }

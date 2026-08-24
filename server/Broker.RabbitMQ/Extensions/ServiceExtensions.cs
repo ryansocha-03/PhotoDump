@@ -1,6 +1,8 @@
 using Broker.RabbitMQ.Models.Configuration;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Broker.RabbitMQ.Extensions;
 
@@ -21,5 +23,25 @@ public static class ServiceExtensions
             .Bind(configuration.GetSection(configurationSection))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        services.AddMassTransit(x =>
+        {
+            x.UsingRabbitMq((context, config) =>
+            {
+                var rabbitOptions = context.GetRequiredService<IOptions<RabbitMqClientConfiguration>>().Value;
+                
+                config.Host(rabbitOptions.Host, rabbitOptions.Port.ToString(), "/", h =>
+                {
+                    h.Username(rabbitOptions.UserName);
+                    h.Password(rabbitOptions.Password);
+                });
+                
+                config.UseRawJsonSerializer();
+                
+                config.ConfigureJsonSerializerOptions(options => options);
+                
+                config.ConfigureEndpoints(context);
+            });
+        });
     }
 }

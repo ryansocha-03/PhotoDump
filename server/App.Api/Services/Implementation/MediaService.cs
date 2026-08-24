@@ -1,6 +1,8 @@
 using System.Text.Json;
 using App.Api.Models.DTOs;
+using App.Api.Models.Request;
 using App.Api.Services.Definition;
+using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.DataProtection;
 using Persistence.Abstractions.Interfaces.Repositories;
@@ -46,6 +48,71 @@ public class MediaService(IDataProtectionProvider dataProtectionProvider, IMedia
         return paginatedMedia;
     }
 
+    /// <inheritdoc />
+    public async Task<List<string>> CreateNewMediaEntriesAsync(long eventInternalId, FilePrivacyEnum privacy, List<MediaUploadInfo> mediaUploadInfos)
+    {
+        List<string> newPublicFileNames = [];
+        List<Media> newMedia = [];
+        
+        foreach (var newMediaInfo in mediaUploadInfos)
+        {
+            var currentContentType = ValidateFileType(newMediaInfo);
+            if (currentContentType == null)
+            {
+                throw new ArgumentException($"File type is invalid for {newMediaInfo.FileName}");
+            }
+
+            var newMediaPublicFileName = GenerateMediaPublicName();
+            newPublicFileNames.Add(newMediaPublicFileName);
+            newMedia.Add(new Media
+            {
+                FileName = newMediaInfo.FileName,
+                PublicFileName = newMediaPublicFileName,
+                OriginalSize = newMediaInfo.FileSize,
+                IsPrivate = privacy,
+                EventId = eventInternalId,
+                Status = ContentStatusEnum.Pending,
+                UploadAttempts = 0,
+                DownloadCount = 0,
+                ContentType = (ContentTypeEnum)currentContentType
+            });
+        }
+
+        await mediaRepository.CreateBulkAsync(newMedia);
+
+        return newPublicFileNames;
+    }
+
+    /// <inheritdoc />
+    public async Task<MediaStateTransitionDto?> AcknowledgeMediaUploadAsync(string publicFileName, Guid eventPublicId)
+    {
+        var updatedMedia = await mediaRepository.UpdateMediaStateByNameAsync(publicFileName, eventPublicId,
+            ContentStatusEnum.Pending, ContentStatusEnum.Uploaded);
+
+        return updatedMedia == null ?
+            null
+            : new MediaStateTransitionDto
+            {
+                MediaInternalId = updatedMedia.Id,
+                Privacy = updatedMedia.IsPrivate
+            };
+    }
+
+    /// <inheritdoc />
+    public async Task<MediaStateTransitionDto?> AcknowledgeMediaProcessingCompletionAsync(long mediaInternalId)
+    {
+        var updatedMedia = await mediaRepository.UpdateMediaStateByIdAsync(mediaInternalId, ContentStatusEnum.Uploaded,
+            ContentStatusEnum.Completed);
+
+        return updatedMedia == null
+            ? null
+            : new MediaStateTransitionDto
+            {
+                MediaInternalId = updatedMedia.Id,
+                Privacy = updatedMedia.IsPrivate
+            };
+    }
+
     #region Private Helpers
 
     /// <summary>
@@ -78,5 +145,30 @@ public class MediaService(IDataProtectionProvider dataProtectionProvider, IMedia
         return _dataProtector.Protect(JsonSerializer.Serialize(mediaCursor));
     }
 
+    /// <summary>
+    /// Validates the file type of new <see cref="MediaUploadInfo"/>
+    /// </summary>
+    /// <param name="mediaUploadInfo">The <see cref="MediaUploadInfo"/> to validate.</param>
+    /// <returns>A <see cref="ContentTypeEnum"/> if the <see cref="MediaUploadInfo"/> is a valid upload,
+    /// <see langword="null"/> otherwise.</returns>
+    private static ContentTypeEnum? ValidateFileType(MediaUploadInfo mediaUploadInfo)
+    {
+        if (Enum.TryParse(mediaUploadInfo.FileExtension, out ContentTypeEnum fileContentType))
+        {
+            return fileContentType;
+        }
+        
+        return null;
+    }
+    
+    /// <summary>
+    /// Generates a new public media name.
+    /// </summary>
+    /// <returns>The new public file name as a <see langword="string"/></returns>
+    private static string GenerateMediaPublicName()
+    {
+        return Guid.NewGuid().ToString("N");
+    }
+    
     #endregion
 }

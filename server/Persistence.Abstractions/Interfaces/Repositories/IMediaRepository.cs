@@ -84,6 +84,7 @@ public interface IMediaRepository
     /// <param name="currentStatus">The current <see cref="ContentStatusEnum"/> of the <see cref="Media"/></param>
     /// <param name="desiredStatus">The desired <see cref="ContentStatusEnum"/> of the <see cref="Media"/></param>
     /// <returns>The fully resolved <see cref="Media"/> entity after update, or <see landword="null"/> if not found.</returns>
+    /// <exception cref="InvalidOperationException">The state transition affected an invalid number of entities.</exception>
     Task<Media?> UpdateMediaStateByIdAsync(long mediaId, ContentStatusEnum currentStatus,
         ContentStatusEnum desiredStatus);
     
@@ -95,6 +96,7 @@ public interface IMediaRepository
     /// <param name="currentStatus">The current <see cref="ContentStatusEnum"/> of the <see cref="Media"/></param>
     /// <param name="desiredStatus">The desired <see cref="ContentStatusEnum"/> of the <see cref="Media"/></param>
     /// <returns>The fully resolved <see cref="Media"/> entity after update, or <see langword="null"/> if not found.</returns>
+    /// <exception cref="InvalidOperationException">The state transition affected an invalid number of entities.</exception>
     Task<Media?> UpdateMediaStateByNameAsync(string fileName, Guid publicEventId, ContentStatusEnum currentStatus, 
         ContentStatusEnum desiredStatus);
     

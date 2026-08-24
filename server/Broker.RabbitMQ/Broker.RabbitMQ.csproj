@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="MassTransit" Version="8.5.10" />
+      <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.10" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
       <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
@@ -14,6 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Broker.Abstractions\Broker.Abstractions.csproj" />
       <ProjectReference Include="..\Domain\Domain.csproj" />
     </ItemGroup>
 

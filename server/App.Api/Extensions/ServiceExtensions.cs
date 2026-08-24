@@ -22,6 +22,8 @@ public static class ServiceExtensions
         services.AddSingleton<IPasswordHasher<object>, PasswordHasher<object>>();
         
         services.AddScoped<IPasswordService, PasswordService>();
+        services.AddScoped<IMediaService, MediaService>();
+        services.AddScoped<IEventService, EventService>();
     }
     
     /// <summary>
@@ -50,13 +52,13 @@ public static class ServiceExtensions
     /// <param name="configurationSection">The path to the configuration section for session auth. Defaults to 'SessionAuth'.</param>
     public static void AddSessionAuth(this IServiceCollection services, IConfiguration configuration, string configurationSection = "SessionAuth")
     {
+        services.AddScoped<ISessionService, SessionService>();
+        
         services.AddOptions<SessionAuthConfiguration>()
             .Bind(configuration.GetSection("SessionAuth"));
         
         services.AddAuthentication(AuthSchemes.SessionAuth)
             .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>(AuthSchemes.SessionAuth, _ => { });
-        
-        services.AddScoped<ISessionService, SessionService>();
     }
 
     /// <summary>

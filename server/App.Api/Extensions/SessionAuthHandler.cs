@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using App.Api.Constants;
+using App.Api.Services.Definition;
 using App.Api.Services.Implementation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
@@ -11,7 +12,7 @@ public sealed class SessionAuthHandler(IOptionsMonitor<AuthenticationSchemeOptio
     ILoggerFactory logger,
     UrlEncoder encoder,
     ISystemClock clock,
-    SessionService sessionService)
+    ISessionService sessionService)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder, clock)
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()

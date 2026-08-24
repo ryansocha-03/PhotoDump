@@ -11,9 +11,6 @@ public sealed record MediaUploadRequestModel
     public FilePrivacyEnum Privacy { get; init; } = FilePrivacyEnum.Private;
 }
 
-/// <summary>
-/// 
-/// </summary>
 public sealed record MediaUploadInfo 
 {
     public required string FileName { get; init; }

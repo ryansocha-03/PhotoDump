@@ -4,6 +4,7 @@ using App.Api.Models.Request;
 using App.Api.Models.Response;
 using App.Api.Services.Definition;
 using Asp.Versioning;
+using Broker.Abstractions.Interfaces;
 using ContentStore.Abstractions.Interfaces;
 using ContentStore.Abstractions.Models;
 using Domain.Enums;
@@ -24,7 +25,7 @@ public class MediaController(
     IMediaService mediaService, 
     IEventService eventService, 
     ILogger<MediaController> logger,
-    IBrokerPublisher publisher) : ControllerBase
+    IMediaMessageService mediaMessageService) : ControllerBase
 {
     
     /// <summary>
@@ -84,7 +85,15 @@ public class MediaController(
         });
     }
     
+    /// <summary>
+    /// Generates a sequence of presigned upload URLs for the provided request objects.
+    /// </summary>
     [HttpPost("upload")]
+    [ActionName("UploadMediaForEvent")]
+    [ProducesResponseType(typeof(IEnumerable<MediaUploadResponseModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UploadMediaForEvent( 
         [FromHeader(Name = SessionAuthHeaders.EventHeader)] Guid eventPublicIdHeader,
         [FromBody] MediaUploadRequestModel mediaUploadData)
@@ -92,35 +101,36 @@ public class MediaController(
         if (mediaUploadData.MediaUploadInfo.Count == 0)
             return BadRequest("No uploads? Alright idiot.");
 
-        var eventId = await eventService.GetEventIdByPublicId(eventPublicIdHeader);
-        if  (eventId is not { } resolvedEventId)
+        var eventId = await eventService.GetEventInternalIdAsync(eventPublicIdHeader);
+        if  (eventId == 0)
             return NotFound("No event found.");
         
         // write files to database
         List<string> publicFileNames;
         try
         {
-            publicFileNames = await mediaService.UploadMedia(mediaUploadData.MediaUploadInfo,
-                resolvedEventId,
-                mediaUploadData.IsPrivate);
+            publicFileNames = (await mediaService.CreateNewMediaEntriesAsync(
+                eventId,
+                mediaUploadData.Privacy,
+                mediaUploadData.MediaUploadInfo)).ToList();
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogError($"One of the proposed new media was invalid: {ex.Message}");
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex);
+            logger.LogError($"Unexpected error when uploading media: {ex}");
             return StatusCode(500, "Unexpected error occured while uploading media."); 
         }
 
-        if (publicFileNames.Count == 0)
-            return BadRequest("Unsupported file type(s).");
-        
         // generate and return presigned URLs 
-        List<string> urls;
+        IReadOnlyList<string> urls;
         try
         {
-            urls = (await contentStoreService.GenerateBulkPresignedUploadUrls(
-                publicFileNames, 
-                eventPublicIdHeader,
-                mediaUploadData.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public)).ToList();
+            urls = await contentStoreService.CreateUploadsAsync(
+                new ContentKeyGroup(eventPublicIdHeader, mediaUploadData.Privacy, ContentVariantEnum.Original, publicFileNames));
         }
         catch (Exception ex)
         {
@@ -128,44 +138,48 @@ public class MediaController(
             return StatusCode(500, "Unexpected error occured while generating uploads.");
         }
 
-        if (publicFileNames.Count != urls.Count)
-            return StatusCode(500);
-            
         var uploadResponses = publicFileNames.Select(
             (t, i) => new MediaUploadResponseModel { FileUploadUrl = urls[i], PublicFileId = t });
 
         return Ok(uploadResponses);
     }
 
-    [Authorize(AuthenticationSchemes = "SessionScheme")]
+    /// <summary>
+    /// Acknowledges an upload of a media from the client so that it can be processed.
+    /// </summary>
     [HttpPost("upload/{publicFileId}/complete")]
+    [ActionName("AcknowledgeCompletedUpload")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AcknowledgeCompletedUpload([FromRoute] string publicFileId,
-        [FromHeader(Name = SessionConfiguration.EventHeaderName)] Guid eventPublicIdHeader)
+        [FromHeader(Name = SessionAuthHeaders.EventHeader)] Guid eventPublicIdHeader)
     {
-        var numUpdated = await mediaService.AcknowledgeUploadStateTransition(publicFileId, eventPublicIdHeader);
-
-        MediaStateTransitionDto uploadedMedia;
-        switch  (numUpdated.Count)
+        MediaStateTransitionDto? updatedMedia;
+        try
         {
-            case 0:
-                return NoContent();
-            case 1:
-                uploadedMedia = numUpdated[0];
-                break;
-            default:
-                return StatusCode(500);
+            updatedMedia = await mediaService.AcknowledgeMediaUploadAsync(publicFileId, eventPublicIdHeader);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex, "Known exception when acknowledging media upload.");
+            return BadRequest("Media upload acknowledgement failed.");
+        }
+        catch (Exception)
+        {
+            logger.LogError("Unknown error when acknowledging media upload.");
+            return StatusCode(StatusCodes.Status500InternalServerError, "Unexpected error occured.");
         }
 
-        await publisher.PublishAsync("photo-thumbnail", new ProcessMediaThumbnailMessageModel
+        if (updatedMedia == null)
         {
-            ObjectName = contentStoreService.BuildObjectName(
-                eventPublicIdHeader, 
-                uploadedMedia.IsPrivate ? FilePrivacyEnum.Private : FilePrivacyEnum.Public,
-                publicFileId 
-            ),
-            MediaId = uploadedMedia.MediaInternalId
-        });
+            return NoContent();
+        }
 
+        var objectName = contentStoreService.GetObjectLocation(new ContentKey(eventPublicIdHeader, updatedMedia.Privacy, ContentVariantEnum.Original, publicFileId));
+        await mediaMessageService.PublishMediaUploadMessageAsync(objectName, updatedMedia.MediaInternalId);
+        
         return Ok();
     }
 }

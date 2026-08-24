@@ -1,4 +1,5 @@
 ﻿using App.Api.Extensions;
+using Asp.Versioning;
 using Broker.RabbitMQ.Extensions;
 using ContentStore.MinIO.Extensions;
 using Infrastructure.EntityFramework.Extensions;
@@ -21,6 +22,14 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddApiVersioning(config =>
+{
+    config.DefaultApiVersion = new ApiVersion(1, 0);
+    config.AssumeDefaultVersionWhenUnspecified = true;
+    config.ReportApiVersions = true;
+    config.ApiVersionReader = new UrlSegmentApiVersionReader();
+});
 
 var app = builder.Build();
 

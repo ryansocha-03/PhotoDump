@@ -44,7 +44,7 @@ public class MinioService(IOptions<MinIoConfiguration> minIoOptions, IOptions<Co
     }
 
     /// <inheritdoc /> 
-    public async Task<IReadOnlyCollection<string>> CreateUploadsAsync(ContentKeyGroup objects)
+    public async Task<IReadOnlyList<string>> CreateUploadsAsync(ContentKeyGroup objects)
     {
         var args = new PresignedPutObjectArgs()
             .WithBucket(_minIoConfiguration.Bucket)

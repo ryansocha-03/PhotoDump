@@ -20,7 +20,7 @@ public interface IContentStoreService
     /// <param name="objects">The objects to create uploads for.</param>
     /// <returns>A <see cref="IReadOnlyCollection{string}"/> containing the uploads for the
     /// passed in <see cref="ContentKeyGroup"/> objects.</returns>
-    Task<IReadOnlyCollection<string>> CreateUploadsAsync(ContentKeyGroup objects);
+    Task<IReadOnlyList<string>> CreateUploadsAsync(ContentKeyGroup objects);
 
     /// <summary>
     /// Asynchronously creates downloads for the passed in <see cref="ContentKeyGroup"/> objects.
@@ -40,7 +40,7 @@ public interface IContentStoreService
     /// <summary>
     /// Asynchronously deletes the content with the exact object name.
     /// </summary>
-    /// <param name="objectName">The object name the delete</param>
+    /// <param name="objectName">The object name to delete</param>
     /// <returns>A <see cref="bool"/> set to <see langword="true"/> if the deletion was a success. Otherwise <see langword="false"/>.</returns>
     Task<bool> DeleteContentExactAsync(string objectName);
     
