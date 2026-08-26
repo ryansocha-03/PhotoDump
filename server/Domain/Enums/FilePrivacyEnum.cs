@@ -7,6 +7,9 @@ namespace Domain.Enums;
 /// </summary>
 public enum FilePrivacyEnum
 {
+    [EnumMember(Value = "unknown")]
+    Unknown,
+    
     [EnumMember(Value = "public")]
     Public,
     

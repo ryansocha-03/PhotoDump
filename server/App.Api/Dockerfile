@@ -5,9 +5,9 @@ EXPOSE 8080
 
 # Copy csproj files for caching
 COPY ["server/App.Api/App.Api.csproj", "App.Api/"]
-COPY ["server/Core/Core.csproj", "Core/"]
+COPY ["server/Broker.RabbitMQ/Broker.RabbitMQ.csproj", "RabbitMQ/"]
+COPY ["server/ContentStore.MinIO/ContentStore.MinIO.csproj", "MinIO/"]
 COPY ["server/Infrastructure.EntityFramework/Infrastructure.EntityFramework.csproj", "Infrastructure.EntityFramework/"]
-COPY ["server/Identity/Identity.csproj", "Identity/"]
 
 # Restore dependencies
 RUN dotnet restore "App.Api/App.Api.csproj"

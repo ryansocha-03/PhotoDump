@@ -42,13 +42,14 @@ public class MediaEntityTypeConfiguration : IEntityTypeConfiguration<Media>
         
         builder
             .Property(m => m.IsPrivate)
-            .HasDefaultValue(true)
+            .HasDefaultValue(FilePrivacyEnum.Private)
+            .HasSentinel(FilePrivacyEnum.Unknown)
             .IsRequired();
 
         builder
             .Property(m => m.ContentType)
-            .IsRequired()
-            .HasDefaultValue(ContentTypeEnum.None);
+            .HasDefaultValue(ContentTypeEnum.None)
+            .IsRequired();
         
         builder
             .HasOne(m => m.Event)

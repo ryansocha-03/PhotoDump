@@ -7,6 +7,9 @@ namespace Domain.Enums;
 /// </summary>
 public enum EventStateEnum
 {
+    [EnumMember(Value = "Unknown")]
+    Unknown = 0,
+    
     [EnumMember(Value = "Draft")]
     Draft,
     

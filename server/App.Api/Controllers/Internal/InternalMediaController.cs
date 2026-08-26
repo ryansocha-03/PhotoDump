@@ -12,7 +12,7 @@ namespace App.Api.Controllers.Internal;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/media")]
+[Route("v{version:apiVersion}/internal/media")]
 [Authorize(AuthenticationSchemes = AuthSchemes.WorkerAuth)]
 public class InternalMediaController(IMediaService mediaService, ILogger<InternalMediaController> logger): ControllerBase
 {

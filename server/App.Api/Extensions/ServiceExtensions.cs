@@ -55,9 +55,9 @@ public static class ServiceExtensions
         services.AddScoped<ISessionService, SessionService>();
         
         services.AddOptions<SessionAuthConfiguration>()
-            .Bind(configuration.GetSection("SessionAuth"));
+            .Bind(configuration.GetSection(configurationSection));
         
-        services.AddAuthentication(AuthSchemes.SessionAuth)
+        services.AddAuthentication()
             .AddScheme<AuthenticationSchemeOptions, SessionAuthHandler>(AuthSchemes.SessionAuth, _ => { });
     }
 
@@ -75,7 +75,7 @@ public static class ServiceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
         
-        services.AddAuthentication(AuthSchemes.WorkerAuth)
+        services.AddAuthentication()
             .AddScheme<WorkerAuthConfiguration, WorkerAuthHandler>(AuthSchemes.WorkerAuth, options =>
         {
             var workerToken = configuration[$"{configurationSection}:Token"]; 

@@ -30,7 +30,7 @@ public static class ServiceExtensions
             {
                 var rabbitOptions = context.GetRequiredService<IOptions<RabbitMqClientConfiguration>>().Value;
                 
-                config.Host(rabbitOptions.Host, rabbitOptions.Port.ToString(), "/", h =>
+                config.Host(rabbitOptions.Host, "/", h =>
                 {
                     h.Username(rabbitOptions.UserName);
                     h.Password(rabbitOptions.Password);

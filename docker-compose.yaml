@@ -59,23 +59,27 @@ services:
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
-      ContentStore__ContentStoreProvider: "s3"
-      ContentStore__AccessKey: "${GARAGE_APP_KEY}"
-      ContentStore__SecretKey: "${GARAGE_APP_SECRET}"
-      ContentStore__ExternalEndpoint: "${CONTENT_STORE_DOMAIN}"
-      ContentStore__InternalEndpoint: garage:${GARAGE_API_PORT}
-      ContentStore__Region: "${GARAGE_REGION}"
-      ContentStore__Bucket: "${CONTENT_STORE_MAIN_BUCKET}"
+      ContentStore__UploadWindowMinutes: 5
+      ContentStore__DownloadWindowMinutes: 5
+      MinIo__AccessKey: "${GARAGE_APP_KEY}"
+      MinIo__SecretKey: "${GARAGE_APP_SECRET}"
+      MinIo__ExternalEndpoint: "${CONTENT_STORE_DOMAIN}"
+      MinIo__InternalEndpoint: garage:${GARAGE_API_PORT}
+      MinIo__Region: "${GARAGE_REGION}"
+      MinIo__Bucket: "${CONTENT_STORE_MAIN_BUCKET}"
+      MinIo__UseSsl: false
       SessionAuth__SessionDurationMinutes: 240 
-      WorkerAuth__HeaderName: "X-Worker-Token"
       WorkerAuth__Token: "${IMAGE_WORKER_TOKEN}"
-      BrokerClient__Host: "broker"
-      BrokerClient__Port: ${BROKER_PORT}
-      BrokerClient__UserName: "${BROKER_USER}"
-      BrokerClient__Password: "${BROKER_PASSWORD}"
-      BrokerClient__QueueName: "photo-thumbnail"
-      DOTNET_ENVIRONMENT: "Development"
+      RabbitMq__Host: "broker"
+      RabbitMq__Port: ${BROKER_PORT}
+      RabbitMq__UserName: "${BROKER_USER}"
+      RabbitMq__Password: "${BROKER_PASSWORD}"
+      RabbitMq__QueueName: "photo-thumbnail"
+      DataProtection__KeystorePath: "/var/lib/dp_keys"
+      DOTNET_ENVIRONMENT: "Production"
     restart: always
+    volumes:
+      - dp_keys:/var/lib/dp_keys
 
   image-worker:
     build:
@@ -104,3 +108,4 @@ volumes:
   garage_meta:
   garage_data:
   broker_data:
+  dp_keys:
