@@ -12,7 +12,7 @@ namespace App.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class SessionController(
     IEventService eventService,
     IPasswordService passwordService,

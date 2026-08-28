@@ -20,6 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ContentStore.MinIO\ContentStore.MinIO.csproj" />
       <ProjectReference Include="..\Infrastructure.EntityFramework\Infrastructure.EntityFramework.csproj" />
     </ItemGroup>
 

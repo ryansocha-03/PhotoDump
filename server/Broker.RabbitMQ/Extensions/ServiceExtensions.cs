@@ -1,4 +1,6 @@
+using Broker.Abstractions.Interfaces;
 using Broker.RabbitMQ.Models.Configuration;
+using Broker.RabbitMQ.Services;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,5 +45,7 @@ public static class ServiceExtensions
                 config.ConfigureEndpoints(context);
             });
         });
+        
+        services.AddScoped<IMediaMessageService,  MediaMessageService>();
     }
 }

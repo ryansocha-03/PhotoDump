@@ -8,6 +8,12 @@ namespace Persistence.Abstractions.Interfaces.Repositories;
 public interface IEventSessionRepository
 {
     /// <summary>
+    /// Gets all <see cref="EventSession"/> for the provided event public identifier.
+    /// </summary>
+    /// <returns>A collection of <see cref="EventSession"/> associated with the provided event.</returns>
+    Task<IEnumerable<EventSession>> GetAllAsync(Guid eventPublicId);
+    
+    /// <summary>
     /// Gets the <see cref="EventSession"/> by its unique identifier.
     /// </summary>
     /// <param name="sessionId">The unique identifier of the <see cref="EventSession"/></param>

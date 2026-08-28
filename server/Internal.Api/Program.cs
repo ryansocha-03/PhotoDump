@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using ContentStore.MinIO.Extensions;
 using Infrastructure.EntityFramework.Extensions;
 using Internal.Api.Extensions;
 
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApiServices();
 builder.Services.AddEfCoreDatabase(builder.Configuration);
+builder.Services.AddMinIoContentStore(builder.Configuration);
 
 builder.Services.AddControllers();
 

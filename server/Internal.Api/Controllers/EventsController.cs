@@ -1,4 +1,6 @@
 using Asp.Versioning;
+using ContentStore.Abstractions.Interfaces;
+using ContentStore.Abstractions.Models;
 using Domain.Entities;
 using Domain.Enums;
 using Internal.Api.Models.Request;
@@ -14,7 +16,11 @@ namespace Internal.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class EventsController(IEventRepository repository, IPasswordHasher<object> passwordHasher): ControllerBase
+public class EventsController(
+    IEventRepository repository, 
+    IPasswordHasher<object> passwordHasher, 
+    IMediaRepository mediaRepository, 
+    IContentStoreService contentStoreService): ControllerBase
 {
     /// <summary>
     /// Retrieves event entities for all events.
@@ -176,6 +182,77 @@ public class EventsController(IEventRepository repository, IPasswordHasher<objec
         catch (Exception ex)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, $"Unexpected error occured while deleting event: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets all media for an event.
+    /// </summary>
+    [HttpGet("{id:long}/media")]
+    [ActionName("GetMediaForEvent")]
+    [ProducesResponseType(typeof(Media), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetMediaForEvent([FromRoute] long id)
+    {
+        try
+        {
+            return Ok(await mediaRepository.GetAllForEventAsync(id));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Unexpected error occured while getting media for event {id}: {ex.Message}");
+        }
+    }
+
+    [HttpGet("{id:long}/content")]
+    [ActionName("GetContentForEvent")]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetContentForEvent([FromRoute] long id)
+    {
+        try
+        {
+            var mediaEvent = await repository.GetByIdAsync(id);
+            if (mediaEvent == null)
+                return NotFound($"Event with id: {id} not found");
+
+            return Ok(await contentStoreService.GetContentNamesAsync(mediaEvent.PublicId.ToString()));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Unexpected error  occured while getting content for event {id}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Deletes a piece of content and all its associated variants.
+    /// </summary>
+    [HttpDelete("{id:long}/media/{mediaId:long}")]
+    [ActionName("DeleteMediaForEvent")]
+    [ProducesResponseType(typeof(Media), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteMediaForEvent([FromRoute] long id, [FromRoute] long mediaId)
+    {
+        try
+        {
+            var mediaToDelete = await mediaRepository.GetByIdAsync(mediaId);
+            if (mediaToDelete == null)
+                return NotFound($"Media with id: {mediaId} not found");
+            
+            var mediaEvent = await repository.GetByIdAsync(mediaId);
+            if (mediaEvent == null)
+                return NotFound($"Event associated with media with id: {mediaId} not found (Event ID: {mediaToDelete.EventId})");
+
+            await mediaRepository.DeleteAsync(mediaToDelete.Id);
+            await contentStoreService.DeleteContentAndVariantsAsync(
+                new ContentKey(mediaEvent.PublicId, mediaToDelete.IsPrivate, ContentVariantEnum.Original, mediaToDelete.PublicFileName));
+            
+            return Ok(mediaToDelete);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, $"Unexpected error occured while deleting media {id}: {ex.Message}");
         }
     }
 }

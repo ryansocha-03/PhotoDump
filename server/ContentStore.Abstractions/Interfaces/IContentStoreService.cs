@@ -38,6 +38,13 @@ public interface IContentStoreService
     Task<bool> DeleteContentAsync(ContentKeyGroup objects);
     
     /// <summary>
+    /// Asynchronously deletes a piece of content and all generated variants.
+    /// </summary>
+    /// <param name="contentKey">The content to delete</param>
+    /// <returns>A <see cref="int"/> containing the number of deletions that occurred.</returns>
+    Task<int> DeleteContentAndVariantsAsync(ContentKey contentKey);
+    
+    /// <summary>
     /// Asynchronously deletes the content with the exact object name.
     /// </summary>
     /// <param name="objectName">The object name to delete</param>
@@ -56,5 +63,5 @@ public interface IContentStoreService
     /// </summary>
     /// <param name="location">The location specified as a <see cref="string"/>.</param>
     /// <returns>An <see cref="IReadOnlyCollection{string}"/> of names of content that reside as the specified location.</returns>
-    Task<IReadOnlyCollection<string>> GetContentNamesAsync(string location);
+    Task<IReadOnlyCollection<string>> GetContentNamesAsync(string? location);
 }

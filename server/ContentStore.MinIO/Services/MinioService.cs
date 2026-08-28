@@ -75,7 +75,7 @@ public class MinioService(IOptions<MinIoConfiguration> minIoOptions, IOptions<Co
                 {
                     { "Content-Disposition", $"attachment; filename=\"{file}\"" }
                 });
-            urls.Add(await _internalS3Client.PresignedGetObjectAsync(args));
+            urls.Add(await _externalS3Client.PresignedGetObjectAsync(args));
         }
         
         return urls.ToImmutableList();
@@ -101,6 +101,29 @@ public class MinioService(IOptions<MinIoConfiguration> minIoOptions, IOptions<Co
         }
 
         return true;
+    }
+
+    /// <inheritdoc /> 
+    public async Task<int> DeleteContentAndVariantsAsync(ContentKey contentKey)
+    {
+        var args = new RemoveObjectArgs()
+            .WithBucket(_minIoConfiguration.Bucket);
+
+        var totalDeletions = 0;
+        foreach (ContentVariantEnum variant in Enum.GetValues<ContentVariantEnum>())
+        {
+            args.WithObject(GetObjectLocation(contentKey with { ContentVariant = variant }));
+
+            try
+            {
+                await _internalS3Client.RemoveObjectAsync(args);
+                totalDeletions++;
+            }
+            catch (InvalidObjectNameException)
+            {
+            }
+        }
+        return totalDeletions;
     }
 
     /// <inheritdoc />
@@ -136,12 +159,14 @@ public class MinioService(IOptions<MinIoConfiguration> minIoOptions, IOptions<Co
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyCollection<string>> GetContentNamesAsync(string location)
+    public async Task<IReadOnlyCollection<string>> GetContentNamesAsync(string? location)
     {
         var args = new ListObjectsArgs()
             .WithBucket(_minIoConfiguration.Bucket)
-            .WithRecursive(true)
-            .WithPrefix(location);
+            .WithRecursive(true);
+
+        if (!string.IsNullOrWhiteSpace(location))
+            args.WithPrefix(location);
 
         var objects = _internalS3Client.ListObjectsEnumAsync(args);
 

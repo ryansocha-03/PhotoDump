@@ -19,7 +19,7 @@ namespace App.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Authorize(AuthenticationSchemes = AuthSchemes.SessionAuth)]
-[Route("v{version:apiVersion}/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class MediaController(
     IContentStoreService contentStoreService, 
     IMediaService mediaService, 

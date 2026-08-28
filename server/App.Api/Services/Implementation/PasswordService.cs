@@ -11,7 +11,7 @@ public class PasswordService(IPasswordHasher<object> passwordHasher) : IPassword
     /// <inheritdoc /> 
     public bool PasswordMatchesHash(string password, string hash)
     {
-        var hashResult = passwordHasher.VerifyHashedPassword(new {},  hash, hash);
+        var hashResult = passwordHasher.VerifyHashedPassword(new {},  hash, password);
         return hashResult switch
         {
             PasswordVerificationResult.Failed => false,

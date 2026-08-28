@@ -10,6 +10,14 @@ namespace Infrastructure.EntityFramework.Repositories;
 /// </summary>
 public class EventSessionRepository(AppDbContext context): IEventSessionRepository 
 {
+    /// <inheritdoc />
+    public async Task<IEnumerable<EventSession>> GetAllAsync(Guid eventPublicId)
+    {
+        return await context.EventSessions
+            .Where(es => es.EventPublicId == eventPublicId)
+            .ToListAsync();
+    }
+    
     /// <inheritdoc /> 
     public async Task<EventSession?> GetAsync(Guid id)
     {
@@ -75,7 +83,7 @@ public class EventSessionRepository(AppDbContext context): IEventSessionReposito
     {
         return await context.EventSessions
             .Where(es => es.RevokedAt != null
-                || es.ExpiresAt <  DateTime.UtcNow)
+                || es.ExpiresAt <  DateTimeOffset.UtcNow)
             .ExecuteDeleteAsync();
     }
 }
