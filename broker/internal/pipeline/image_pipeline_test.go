@@ -315,10 +315,10 @@ func (g *fakeGenerator) GenerateVariants(_ context.Context, original []byte, spe
 type fakeNotifier struct {
 	err      *ProcessingError
 	calls    int
-	mediaIDs []int
+	mediaIDs []int64
 }
 
-func (n *fakeNotifier) MarkCompleted(_ context.Context, mediaID int) *ProcessingError {
+func (n *fakeNotifier) MarkCompleted(_ context.Context, mediaID int64) *ProcessingError {
 	n.calls++
 	n.mediaIDs = append(n.mediaIDs, mediaID)
 	return n.err

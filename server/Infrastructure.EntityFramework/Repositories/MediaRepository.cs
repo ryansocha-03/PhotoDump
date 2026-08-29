@@ -98,7 +98,7 @@ public class MediaRepository(AppDbContext context) : IMediaRepository
         try
         {
             var updatedMedia= await context.Media.FromSqlRaw(@"
-                UPDATE ""Media"" 
+                UPDATE ""Media"" m
                 SET ""Status"" = {0}
                 WHERE m.""Id"" = {1}
                     AND m.""Status"" = {2}

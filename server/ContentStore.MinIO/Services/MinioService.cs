@@ -151,7 +151,7 @@ public class MinioService(IOptions<MinIoConfiguration> minIoOptions, IOptions<Co
         {
             ContentVariantEnum.Gallery => "/gallery",
             ContentVariantEnum.Spotlight => "/spotlight",
-            ContentVariantEnum.Original => " /original",
+            ContentVariantEnum.Original => "/original",
             _ => throw new ArgumentOutOfRangeException(nameof(objectKey.ContentVariant), objectKey.ContentVariant, null)
         };
 

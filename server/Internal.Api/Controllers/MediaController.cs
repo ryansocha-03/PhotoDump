@@ -26,7 +26,13 @@ public class MediaController(IContentStoreService contentStoreService) : Control
     {
         try
         {
-            return Ok(await contentStoreService.DeleteContentExactAsync(requestData.fullName));
+            var deleteWasSuccessful = true;
+            foreach (var contentToDelete in requestData.contentNames)
+            {
+                var currentDeleteResult = await contentStoreService.DeleteContentExactAsync(contentToDelete);
+                if (!currentDeleteResult) deleteWasSuccessful = false;
+            }
+            return Ok(deleteWasSuccessful);
         }
         catch (Exception ex)
         {

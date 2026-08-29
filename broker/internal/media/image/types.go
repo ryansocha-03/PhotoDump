@@ -18,6 +18,10 @@ const (
 	FormatJPEG Format = "jpeg"
 	FormatWebP Format = "webp"
 	FormatAVIF Format = "avif"
+	FormatHEIC Format = "heic"
+	FormatHEIF Format = "heif"
+	FormatPNG  Format = "png"
+	FormatJPG  Format = "jpg"
 )
 
 type Color struct {
@@ -81,7 +85,7 @@ func ValidateVariantSpecs(specs []VariantSpec) error {
 			return fmt.Errorf("variant %q has unsupported fit mode %q", spec.Name, spec.Fit)
 		}
 
-		if spec.Format != FormatJPEG && spec.Format != FormatWebP && spec.Format != FormatAVIF {
+		if spec.Format != FormatJPEG && spec.Format != FormatWebP && spec.Format != FormatAVIF && spec.Format != FormatHEIC && spec.Format != FormatHEIF && spec.Format != FormatPNG && spec.Format != FormatJPG {
 			return fmt.Errorf("variant %q has unsupported format %q", spec.Name, spec.Format)
 		}
 

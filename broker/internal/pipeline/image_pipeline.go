@@ -27,7 +27,7 @@ type ImageVariantGenerator interface {
 }
 
 type CompletionNotifier interface {
-	MarkCompleted(ctx context.Context, mediaID int) *ProcessingError
+	MarkCompleted(ctx context.Context, mediaID int64) *ProcessingError
 }
 
 type ImageVariantPipeline struct {
@@ -114,9 +114,6 @@ func (p *ImageVariantPipeline) ProcessMessage(ctx context.Context, body []byte) 
 
 func VariantObjectName(originalObjectName string, variant mediaimage.GeneratedVariant) string {
 	dir := path.Dir(originalObjectName)
-	baseName := path.Base(originalObjectName)
-	extension := path.Ext(baseName)
-	rootName := strings.TrimSuffix(baseName, extension)
 
-	return path.Join(dir, fmt.Sprintf("%s_%s", rootName, variant.Name))
+	return path.Join(strings.TrimSpace(dir), variant.Name)
 }

@@ -240,7 +240,7 @@ public class EventsController(
             if (mediaToDelete == null)
                 return NotFound($"Media with id: {mediaId} not found");
             
-            var mediaEvent = await repository.GetByIdAsync(mediaId);
+            var mediaEvent = await repository.GetByIdAsync(id);
             if (mediaEvent == null)
                 return NotFound($"Event associated with media with id: {mediaId} not found (Event ID: {mediaToDelete.EventId})");
 

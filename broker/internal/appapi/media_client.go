@@ -32,8 +32,8 @@ func NewMediaClient(baseURL, tokenHeaderName, token string, httpClient *http.Cli
 	}
 }
 
-func (c *MediaClient) MarkCompleted(ctx context.Context, mediaID int) *pipeline.ProcessingError {
-	url := fmt.Sprintf("%s/internal/media/%d/complete", c.baseURL, mediaID)
+func (c *MediaClient) MarkCompleted(ctx context.Context, mediaID int64) *pipeline.ProcessingError {
+	url := fmt.Sprintf("%s/api/v1/internal/media/%d/complete", c.baseURL, mediaID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 	if err != nil {

@@ -1,3 +1,3 @@
 namespace Internal.Api.Models.Request;
 
-public record DeleteExactContentRequestModel(string fullName);
+public record DeleteExactContentRequestModel(IEnumerable<string> contentNames);

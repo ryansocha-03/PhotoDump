@@ -98,7 +98,7 @@ func newThumbnail(original []byte, spec VariantSpec) (*vips.ImageRef, error) {
 
 func exportVariant(imageRef *vips.ImageRef, spec VariantSpec) ([]byte, *vips.ImageMetadata, error) {
 	switch spec.Format {
-	case FormatJPEG:
+	case FormatJPEG, FormatJPG:
 		params := vips.NewJpegExportParams()
 		params.StripMetadata = spec.StripMetadata
 		params.Quality = spec.Quality
@@ -134,6 +134,24 @@ func exportVariant(imageRef *vips.ImageRef, spec VariantSpec) ([]byte, *vips.Ima
 			return nil, nil, fmt.Errorf("unable to encode variant %q as avif: %w", spec.Name, err)
 		}
 		return output, metadata, nil
+	case FormatHEIC, FormatHEIF:
+		params := vips.NewHeifExportParams()
+		params.Quality = spec.Quality
+		params.Effort = 5
+		output, metadata, err := imageRef.ExportHeif(params)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to encode variant %q as heif: %w", spec.Name, err)
+		}
+		return output, metadata, nil
+	case FormatPNG:
+		params := vips.NewPngExportParams()
+		params.Quality = spec.Quality
+		params.StripMetadata = spec.StripMetadata
+		output, metadata, err := imageRef.ExportPng(params)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to encode variant %q as png: %w", spec.Name, err)
+		}
+		return output, metadata, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported output format %q", spec.Format)
 	}
@@ -147,6 +165,14 @@ func contentType(format Format) string {
 		return "image/webp"
 	case FormatAVIF:
 		return "image/avif"
+	case FormatHEIC:
+		return "image/heic"
+	case FormatHEIF:
+		return "image/heif"
+	case FormatPNG:
+		return "image/png"
+	case FormatJPG:
+		return "image/jpeg"
 	default:
 		return "application/octet-stream"
 	}

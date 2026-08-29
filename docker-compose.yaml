@@ -13,6 +13,8 @@ services:
 
   garage:
     image: dxflrs/garage:v2.1.0
+    ports:
+      - "${GARAGE_API_PORT}:${GARAGE_API_PORT}"
     volumes:
       - ./storage/garage.toml:/etc/garage.toml
       - garage_meta:/var/lib/garage/meta
