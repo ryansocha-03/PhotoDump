@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: "Dump on your photos",
 };
 
+/**
+ * The root layout component for the application. It wraps the entire application with HTML and body tags, applying global styles and fonts.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

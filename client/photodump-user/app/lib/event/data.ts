@@ -10,7 +10,7 @@ export async function getEventLandingData(eventPublicId: string) : Promise<ApiRe
     
     let eventDataResponse: Response;
     try {
-        const eventDataRequest = new Request(`${process.env.APP_API_URL}/events/landing`);
+        const eventDataRequest = new Request(`${process.env.APP_API_URL}/api/v1/events`);
         eventDataRequest.headers.append(EVENT_HEADER_NAME, eventPublicId);
         eventDataResponse = await fetch(eventDataRequest);
     }

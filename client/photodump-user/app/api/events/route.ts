@@ -33,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         EventKey: requestData.eventPassword
     }
 
-    const eventAuthRequest = new Request(`${process.env.APP_API_URL}/auth/event`,
+    const eventAuthRequest = new Request(`${process.env.APP_API_URL}/api/v1/session`,
         {
             body: JSON.stringify(authBody),
             method: 'POST',
@@ -51,7 +51,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const sessionData: EventSessionData = await eventAuthResponse.json();
     const response = NextResponse.json({});
-    setSecureCookie(response, sessionData.sessionId, sessionData.expiresAt);
+    var expiresAtDate = new Date(sessionData.expiresAt);
+    expiresAtDate.setMinutes(expiresAtDate.getMinutes() - 2) // Subtract 2 minutes from expiration time
+
+    setSecureCookie(response, sessionData.sessionId, expiresAtDate); 
 
     return response;
 }

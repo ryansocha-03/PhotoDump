@@ -11,6 +11,10 @@ const errorMessages: string[] = [
     "Issue when logging in with password. Please try again."
 ]
 
+/**
+ * A component for handling event password submission.
+ * @param eventId - The public ID of the event for which the password is being submitted. 
+ */
 export default function EventPassword({
     eventId
 } : {
@@ -44,7 +48,7 @@ export default function EventPassword({
         )
 
         if (authResponse.ok) {
-            router.push(`/e/${eventId}/guests`)
+            router.push(`/e/${eventId}/media`)
         }
         else if (authResponse.status == 401) {
             setErrorMessage(0);

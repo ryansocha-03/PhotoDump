@@ -1,7 +1,6 @@
-import { EVENT_HEADER_NAME } from "../auth/cookie";
+import { addEventHeaders } from "../auth/api";
+import { EVENT_HEADER_NAME, SESSION_HEADER_NAME } from "../auth/cookie";
 import { ApiResponseModel } from "../types";
-
-const SESSION_HEADER_NAME = "X-Session-Id";
 
 export interface PaginatedThumbnailUrls {
     items: string[],
@@ -10,13 +9,14 @@ export interface PaginatedThumbnailUrls {
 }
 
 export interface FileUploadInfo {
-    FileName: string,
-    FileSize: number
+    FileName: string;
+    FileExtension: string;
+    FileSize: number;
 }
 
 export interface FileUploadRequest {
     MediaUploadInfo: FileUploadInfo[],
-    IsPrivate: boolean
+    Privacy?: number 
 }
 
 export interface MediaUploadTicket {
@@ -24,7 +24,14 @@ export interface MediaUploadTicket {
     fileUploadUrl: string
 }
 
-export async function getEventThumbnailUrls(sessionId: string, publicEventId: string, cursor?: string): Promise<ApiResponseModel<PaginatedThumbnailUrls>> {
+/**
+ * Gets the thumbnails for a gallery with pagination support.
+ * @param sessionId The user's session ID for authentication.
+ * @param publicEventId The public ID of the event for which to retrieve thumbnails.
+ * @param cursor Optional cursor for pagination. If provided, the API will return the next page of results starting from this cursor.
+ * @returns A promise that resolves to an ApiResponseModel containing PaginatedThumbnailUrls, which includes the list of thumbnail URLs, a flag indicating if there are more pages, and the next cursor for pagination.
+ */
+export async function getGalleryContent(sessionId: string, publicEventId: string, cursor?: string): Promise<ApiResponseModel<PaginatedThumbnailUrls>> {
     const thumbnailData: ApiResponseModel<PaginatedThumbnailUrls> = {
         code: 200,
         data: null
@@ -32,14 +39,13 @@ export async function getEventThumbnailUrls(sessionId: string, publicEventId: st
 
     let thumbnailResponse: Response;
     try {
-        const thumbnailUrl = new URL(`${process.env.APP_API_URL}/media/download`);
+        const thumbnailUrl = new URL(`${process.env.APP_API_URL}/api/v1/media/download`);
         if (cursor) {
             thumbnailUrl.searchParams.set("cursor", cursor);
         }
 
         const thumbnailRequest = new Request(thumbnailUrl);
-        thumbnailRequest.headers.append(SESSION_HEADER_NAME, sessionId);
-        thumbnailRequest.headers.append(EVENT_HEADER_NAME, publicEventId);
+        addEventHeaders(thumbnailRequest, sessionId, publicEventId);
         thumbnailResponse = await fetch(thumbnailRequest, { cache: "no-store" });
     }
     catch {

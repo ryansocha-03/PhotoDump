@@ -1,3 +1,6 @@
+/**
+ * Standard loading indicator component that displays three animated dots.
+ */
 export default function LoadingThreeDots() {
     return (
         <div className="flex items-center gap-1 h-full">

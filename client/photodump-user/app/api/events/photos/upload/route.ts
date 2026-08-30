@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!eventId) return NextResponse.json({}, { status: 400 });
 
     const uploadRequestBody: FileUploadRequest = await request.json();
-    const mediaUploadRequest = new Request(`${process.env.APP_API_URL}/media/upload`,
+    const mediaUploadRequest = new Request(`${process.env.APP_API_URL}/api/v1/media/upload`,
         {
             method: "POST",
             headers: {
@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
 
     const mediaUploadResponse = await fetch(mediaUploadRequest);
     
-    if (mediaUploadResponse.status == 401) {
+    if (mediaUploadResponse.status == 401 || mediaUploadResponse.status == 403) {
         const badResponse = NextResponse.json({}, { status: mediaUploadResponse.status });
-        deleteSessionCookie(badResponse);
+        badResponse.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", expires: new Date(0) });
         return badResponse;
     }
     else if (!mediaUploadResponse.ok) {

@@ -4,9 +4,9 @@ export const SESSION_COOKIE_NAME = 'sid';
 
 export const SESSION_HEADER_NAME = 'X-Session-Id';
 
-export const EVENT_HEADER_NAME = 'X-Event-Public-Id';
+export const EVENT_HEADER_NAME = 'X-Event-Id';
 
-export function setSecureCookie(response: NextResponse, sessionId: string, expiresAt: string) {
+export function setSecureCookie(response: NextResponse, sessionId: string, expiresAt: Date) {
     response.cookies.set(
         SESSION_COOKIE_NAME,
         sessionId,
@@ -15,7 +15,7 @@ export function setSecureCookie(response: NextResponse, sessionId: string, expir
             sameSite: 'strict',
             secure: true,
             path: '/',
-            expires: new Date(expiresAt)
+            expires: expiresAt
         }
     )
 }
