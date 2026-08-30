@@ -9,14 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add core services.
 builder.Services.AddEfCoreDatabase(builder.Configuration);
 builder.Services.AddMinIoContentStore(builder.Configuration);
-builder.Services.AddRabbitMqBroker(builder.Configuration);
 
 // Register actual services
 builder.AddDataProtectionServices();
 builder.Services.AddApiServices();
 
 builder.Services.AddSessionAuth(builder.Configuration);
-builder.Services.AddWorkerAuth(builder.Configuration);
 
 builder.Services.AddControllers();
 

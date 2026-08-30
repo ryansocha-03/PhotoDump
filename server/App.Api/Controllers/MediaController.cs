@@ -4,7 +4,6 @@ using App.Api.Models.Request;
 using App.Api.Models.Response;
 using App.Api.Services.Definition;
 using Asp.Versioning;
-using Broker.Abstractions.Interfaces;
 using ContentStore.Abstractions.Interfaces;
 using ContentStore.Abstractions.Models;
 using Domain.Enums;
@@ -24,8 +23,7 @@ public class MediaController(
     IContentStoreService contentStoreService, 
     IMediaService mediaService, 
     IEventService eventService, 
-    ILogger<MediaController> logger,
-    IMediaMessageService mediaMessageService) : ControllerBase
+    ILogger<MediaController> logger) : ControllerBase
 {
     
     /// <summary>
@@ -142,44 +140,5 @@ public class MediaController(
             (t, i) => new MediaUploadResponseModel { FileUploadUrl = urls[i], PublicFileId = t });
 
         return Ok(uploadResponses);
-    }
-
-    /// <summary>
-    /// Acknowledges an upload of a media from the client so that it can be processed.
-    /// </summary>
-    [HttpPost("upload/{publicFileId}/complete")]
-    [ActionName("AcknowledgeCompletedUpload")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> AcknowledgeCompletedUpload([FromRoute] string publicFileId,
-        [FromHeader(Name = SessionAuthHeaders.EventHeader)] Guid eventPublicIdHeader)
-    {
-        MediaStateTransitionDto? updatedMedia;
-        try
-        {
-            updatedMedia = await mediaService.AcknowledgeMediaUploadAsync(publicFileId, eventPublicIdHeader);
-        }
-        catch (InvalidOperationException ex)
-        {
-            logger.LogError(ex, "Known exception when acknowledging media upload.");
-            return BadRequest("Media upload acknowledgement failed.");
-        }
-        catch (Exception)
-        {
-            logger.LogError("Unknown error when acknowledging media upload.");
-            return StatusCode(StatusCodes.Status500InternalServerError, "Unexpected error occured.");
-        }
-
-        if (updatedMedia == null)
-        {
-            return NoContent();
-        }
-
-        var objectName = contentStoreService.GetObjectLocation(new ContentKey(eventPublicIdHeader, updatedMedia.Privacy, ContentVariantEnum.Original, publicFileId));
-        await mediaMessageService.PublishMediaUploadMessageAsync(objectName, updatedMedia.MediaInternalId);
-        
-        return Ok();
     }
 }

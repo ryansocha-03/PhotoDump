@@ -21,17 +21,6 @@ services:
       - garage_data:/var/lib/garage/data
     restart: always
 
-  broker:
-    image: rabbitmq:4.2.3-alpine
-    ports:
-      - "5672:5672"
-    volumes:
-      - broker_data:/var/lib/rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: ${BROKER_USER}
-      RABBITMQ_DEFAULT_PASS: ${BROKER_PASSWORD}
-    restart: always
-
   proxy:
     image: nginx
     volumes:
@@ -57,7 +46,6 @@ services:
     depends_on:
       - db
       - garage
-      - broker
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
@@ -83,31 +71,8 @@ services:
     volumes:
       - dp_keys:/var/lib/dp_keys
 
-  image-worker:
-    build:
-      context: .
-      dockerfile: broker/Dockerfile
-    depends_on:
-      - garage
-      - broker
-    environment:
-      PD_CONTENT_STORE_DOMAIN: "garage:${GARAGE_API_PORT}"
-      PD_CONTENT_STORE_KEY: "${GARAGE_APP_KEY}"
-      PD_CONTENT_STORE_SECRET: "${GARAGE_APP_SECRET}"
-      PD_CONTENT_STORE_BUCKET: "${CONTENT_STORE_MAIN_BUCKET}"
-      PD_CONTENT_STORE_SECURE: "false"
-      PD_QUEUE_CONNECTION_STRING: "amqp://${BROKER_USER}:${BROKER_PASSWORD}@broker:${BROKER_PORT}"
-      PD_QUEUE_NAME: "photo-thumbnail"
-      PD_MAX_WORKERS: 4
-      PD_MAX_MESSAGES: 4
-      PD_APP_API_BASE_URL: "http://app-api:${APP_API_PORT}"
-      PD_APP_API_TOKEN: ${IMAGE_WORKER_TOKEN}
-      PD_TOKEN_HEADER_NAME: "X-Worker-Token"
-    restart: always
-
 volumes:
   postgres_data:
   garage_meta:
   garage_data:
-  broker_data:
   dp_keys:
