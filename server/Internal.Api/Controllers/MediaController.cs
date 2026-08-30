@@ -1,8 +1,11 @@
 using Asp.Versioning;
 using ContentStore.Abstractions.Interfaces;
+using ContentStore.Abstractions.Models;
 using Domain.Entities;
+using Domain.Enums;
 using Internal.Api.Models.Request;
 using Microsoft.AspNetCore.Mvc;
+using Persistence.Abstractions.Interfaces.Repositories;
 
 namespace Internal.Api.Controllers;
 
@@ -12,7 +15,7 @@ namespace Internal.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class MediaController(IContentStoreService contentStoreService) : ControllerBase
+public class MediaController(IContentStoreService contentStoreService, IMediaRepository mediaRepository) : ControllerBase
 {
     /// <summary>
     /// Deletes a piece of media
@@ -57,6 +60,16 @@ public class MediaController(IContentStoreService contentStoreService) : Control
         {
             return StatusCode(StatusCodes.Status500InternalServerError, $"Unexpected error when fetching content: {ex.Message}");
         }
+    }
+
+    [HttpGet("{eventPublicId}/{id:long}/download")]
+    [ActionName("GetContentDownloadByExactName")]
+    public async Task<IActionResult> GetContentDownloadByExactName([FromRoute] string eventPublicId,[FromRoute] long id)
+    {
+        var mediaToDownload = await mediaRepository.GetByIdAsync(id);
+        if (mediaToDownload == null) return NotFound();
+
+        return Ok(await contentStoreService.CreateDownloadsAsync(new ContentKeyGroup(Guid.Parse(eventPublicId),  FilePrivacyEnum.Private, ContentVariantEnum.Original, [mediaToDownload.PublicFileName])));
     }
 
     /// <summary>

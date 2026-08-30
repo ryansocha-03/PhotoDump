@@ -57,10 +57,6 @@ public class MediaService(IDataProtectionProvider dataProtectionProvider, IMedia
         foreach (var newMediaInfo in mediaUploadInfos)
         {
             var currentContentType = ValidateFileType(newMediaInfo);
-            if (currentContentType == null)
-            {
-                throw new ArgumentException($"File type is invalid for {newMediaInfo.FileName}");
-            }
 
             var newMediaPublicFileName = GenerateMediaPublicName();
             newPublicFileNames.Add(newMediaPublicFileName);
@@ -74,7 +70,7 @@ public class MediaService(IDataProtectionProvider dataProtectionProvider, IMedia
                 Status = ContentStatusEnum.Pending,
                 UploadAttempts = 0,
                 DownloadCount = 0,
-                ContentType = (ContentTypeEnum)currentContentType
+                ContentType = currentContentType,
             });
         }
 
@@ -151,14 +147,9 @@ public class MediaService(IDataProtectionProvider dataProtectionProvider, IMedia
     /// <param name="mediaUploadInfo">The <see cref="MediaUploadInfo"/> to validate.</param>
     /// <returns>A <see cref="ContentTypeEnum"/> if the <see cref="MediaUploadInfo"/> is a valid upload,
     /// <see langword="null"/> otherwise.</returns>
-    private static ContentTypeEnum? ValidateFileType(MediaUploadInfo mediaUploadInfo)
+    private static ContentTypeEnum ValidateFileType(MediaUploadInfo mediaUploadInfo)
     {
-        if (Enum.TryParse(mediaUploadInfo.FileExtension, out ContentTypeEnum fileContentType))
-        {
-            return fileContentType;
-        }
-        
-        return null;
+        return Enum.TryParse(mediaUploadInfo.FileExtension, out ContentTypeEnum fileContentType) ? fileContentType : ContentTypeEnum.Jpeg;
     }
     
     /// <summary>

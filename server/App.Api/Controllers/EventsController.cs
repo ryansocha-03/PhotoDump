@@ -11,7 +11,7 @@ namespace App.Api.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
-[Route("v{version:apiVersion}/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
 {
     /// <summary>
