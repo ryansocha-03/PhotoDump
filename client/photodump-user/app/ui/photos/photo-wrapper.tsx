@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileUploadRequest, MediaUploadTicket } from "@/app/lib/media/data";
 import clientEventRequest from "@/app/lib/api-client";
+import toast from "react-hot-toast";
 
 export default function PhotoWrapper({
     publicEventId
@@ -16,6 +17,8 @@ export default function PhotoWrapper({
         if (!files || files.length === 0) return;
 
         setIsUploading(true);
+        toast.success("Uploading photos. This may take a few minutes depending on your connection speed.");
+        
         const filesArray = Array.from(files);   
         var uploadsAreSuccess = true;
 
@@ -66,6 +69,12 @@ export default function PhotoWrapper({
         }
         finally {
             setIsUploading(false);
+            if (uploadsAreSuccess) {
+                toast.success("Photos uploaded successfully!");
+            }
+            else {
+                toast.error("Some photos failed to upload. Please try again.");
+            }
         }
     }
 

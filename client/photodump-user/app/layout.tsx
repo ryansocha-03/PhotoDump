@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant } from "next/font/google";
 import "./globals.css";
+import Providers from "./ui/toast-provider";
 
 const cormorant = Cormorant({
   subsets: ["latin"],
@@ -24,7 +25,9 @@ export default function RootLayout({
       <body
         className={`${cormorant.className} m-8 antialiased`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

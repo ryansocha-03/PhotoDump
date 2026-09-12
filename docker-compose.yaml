@@ -1,8 +1,14 @@
 services:
+  tunnel:
+    image: cloudflare/cloudflared:2023.8.1
+    restart: always
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app-api
+      - user-app
+
   db:
     image: postgres:18
-    ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -13,30 +19,10 @@ services:
 
   garage:
     image: dxflrs/garage:v2.1.0
-    ports:
-      - "${GARAGE_API_PORT}:${GARAGE_API_PORT}"
     volumes:
       - ./storage/garage.toml:/etc/garage.toml
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
-    restart: always
-
-  proxy:
-    image: nginx
-    volumes:
-      - ./infrastructure/proxy/nginx:/etc/nginx/templates
-    ports:
-      - "80:80"
-    environment:
-      PROXY_PORT: ${PROXY_PORT}
-      APP_API_DOMAIN: ${APP_API_DOMAIN}
-      APP_API_PORT: ${APP_API_PORT}
-      CONTENT_STORE_DOMAIN: ${CONTENT_STORE_DOMAIN}
-      GARAGE_API_PORT: ${GARAGE_API_PORT}
-      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN}
-    depends_on:
-      - app-api
-      - garage
     restart: always
 
   app-api:
@@ -57,19 +43,22 @@ services:
       MinIo__InternalEndpoint: garage:${GARAGE_API_PORT}
       MinIo__Region: "${GARAGE_REGION}"
       MinIo__Bucket: "${CONTENT_STORE_MAIN_BUCKET}"
-      MinIo__UseSsl: false
+      MinIo__UseSsl: true 
       SessionAuth__SessionDurationMinutes: 240 
-      WorkerAuth__Token: "${IMAGE_WORKER_TOKEN}"
-      RabbitMq__Host: "broker"
-      RabbitMq__Port: ${BROKER_PORT}
-      RabbitMq__UserName: "${BROKER_USER}"
-      RabbitMq__Password: "${BROKER_PASSWORD}"
-      RabbitMq__QueueName: "photo-thumbnail"
       DataProtection__KeystorePath: "/var/lib/dp_keys"
       DOTNET_ENVIRONMENT: "Production"
     restart: always
     volumes:
       - dp_keys:/var/lib/dp_keys
+
+  user-app:
+    build:
+      context: ./client/photodump-user
+      dockerfile: Dockerfile
+    depends_on:
+      - app-api
+    environment:
+      APP_API_URL: "http://app-api:8080"
 
 volumes:
   postgres_data:

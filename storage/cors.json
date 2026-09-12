@@ -1,0 +1,10 @@
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": ["https://www.appamomo.net"],
+      "AllowedMethods": ["PUT", "OPTIONS"],
+      "AllowedHeaders": ["content-type"],
+      "MaxAgeSeconds": 3600
+    }
+  ]
+}
