@@ -1,6 +1,5 @@
 ﻿using App.Api.Extensions;
 using Asp.Versioning;
-using Broker.RabbitMQ.Extensions;
 using ContentStore.MinIO.Extensions;
 using Infrastructure.EntityFramework.Extensions;
 
@@ -40,5 +39,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.Services.RunMigrations();
 
 app.Run();

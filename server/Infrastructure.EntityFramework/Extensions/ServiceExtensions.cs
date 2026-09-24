@@ -40,7 +40,7 @@ public static class ServiceExtensions
             switch (databaseConfigurationValue.DatabaseProvider)
             {
                 default:
-                    options.UseNpgsql(databaseConfigurationValue.ConnectionString);
+                    options.UseNpgsql(databaseConfigurationValue.ConnectionString, x => x.MigrationsAssembly("Infrastructure.EntityFramework"));
                     break;
             }
         });
@@ -49,6 +49,26 @@ public static class ServiceExtensions
         services.AddScoped<IEventSessionRepository, EventSessionRepository>();
         services.AddScoped<IEventTypeRepository, EventTypeRepository>();
         services.AddScoped<IMediaRepository, MediaRepository>();
+    }
+
+    /// <summary>
+    /// Runs any new Migrations on startup
+    /// </summary>
+    /// <param name="serviceProvider">The service container.</param>
+    public static void RunMigrations(this IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<AppDbContext>();
+            context.Database.Migrate();
+            Console.WriteLine("Successfully ran migrations.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);  
+        }
     }
     
 }

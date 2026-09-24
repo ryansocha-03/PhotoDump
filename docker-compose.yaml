@@ -14,6 +14,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes: 
       - postgres_data:/var/lib/postgresql
 
@@ -30,8 +35,10 @@ services:
       context: .
       dockerfile: server/App.Api/Dockerfile 
     depends_on:
-      - db
-      - garage
+      db:
+        condition: service_healthy
+      garage:
+        condition: service_started
     environment:
       AppDatabase__DatabaseProvider: "postgres"
       AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
@@ -50,6 +57,33 @@ services:
     restart: always
     volumes:
       - dp_keys:/var/lib/dp_keys
+
+  internal-api:
+    build:
+      context: .
+      dockerfile: server/Internal.Api/Dockerfile 
+    depends_on:
+      db:
+          condition: service_healthy
+      garage:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      AppDatabase__DatabaseProvider: "postgres"
+      AppDatabase__ConnectionString: "Host=db;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      ContentStore__UploadWindowMinutes: 5
+      ContentStore__DownloadWindowMinutes: 5
+      MinIo__ContentStoreProvider: "s3"
+      MinIo__AccessKey: "${GARAGE_APP_KEY}"
+      MinIo__SecretKey: "${GARAGE_APP_SECRET}"
+      MinIo__ExternalEndpoint: "${CONTENT_STORE_DOMAIN}"
+      MinIo__InternalEndpoint: garage:${GARAGE_API_PORT}
+      MinIo__Region: "${GARAGE_REGION}"
+      MinIo__Bucket: "${CONTENT_STORE_MAIN_BUCKET}"
+      MinIo__UseSsl: false 
+      DOTNET_ENVIRONMENT: "Production"
+    restart: no
 
   user-app:
     build:
